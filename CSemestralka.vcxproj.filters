@@ -21,6 +21,9 @@
     <ClCompile Include="bigInt.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bigInt_io.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bigInt.h">

@@ -124,6 +124,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bigInt.c" />
+    <ClCompile Include="bigInt_io.c" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
