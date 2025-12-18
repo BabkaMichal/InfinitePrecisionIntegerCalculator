@@ -31,7 +31,7 @@ BigInt* bigint_init(size_t cap) {
 }
 
 /* free BigInt from memory */
-void bigIntFree(BigInt* n) {
+void bigint_free(BigInt* n) {
     /* sanity check */
     if (!n) return;
 
@@ -94,7 +94,7 @@ void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
 }
 
 /* addition with logic */
-BigInt* bigInt_add(BigInt* a, BigInt* b) {
+BigInt* bigint_add(BigInt* a, BigInt* b) {
     /* variables */
     BigInt* res;
 
@@ -116,6 +116,7 @@ BigInt* bigInt_add(BigInt* a, BigInt* b) {
         /* same number */
         if (cmp == 0)
         {
+            /* returns 0 */
             res = bigint_init(1);
             res->sign = SIGN_POS;
             return res;
@@ -130,6 +131,7 @@ BigInt* bigInt_add(BigInt* a, BigInt* b) {
         /* b is bigger */
         else
         {
+            /* b - a and sign from b */
             res = core_sub(b, a);
             res->sign = b->sign;
             return res;
@@ -137,8 +139,8 @@ BigInt* bigInt_add(BigInt* a, BigInt* b) {
     }
 }
 
-/* substraction with logic */
-BigInt* bigInt_sub(BigInt* a, BigInt* b) {
+/* substraction with sign logic */
+BigInt* bigint_sub(BigInt* a, BigInt* b) {
     /* variables */
     BigInt* res;
 
@@ -149,7 +151,7 @@ BigInt* bigInt_sub(BigInt* a, BigInt* b) {
     b->sign *= -1;
 
     /* we do addition -> a-b = a + (-b)*/
-    res = bigInt_add(a, b);
+    res = bigint_add(a, b);
 
     /* we bring the sign back to original*/
     b->sign *= 1;
@@ -157,7 +159,30 @@ BigInt* bigInt_sub(BigInt* a, BigInt* b) {
     return res;
 }
 
-/* basic function that subs a - b, no logic */
+/* multiplication with sign logic */
+BigInt* bigint_mult(BigInt* a, BigInt* b) {
+    /* variables */
+    BigInt* res;
+
+    /* sanity check */
+    if (!a || !b) return NULL;
+
+    /* if one number 0 -> just return zero to save time*/
+    if (bigint_zero(a) || bigint_zero(b))
+    {
+        return str_to_bigint("0");
+    }
+
+    /* setting the absolute value */
+    res = core_mult(a, b);
+
+    /* sign logic */
+    res->sign = a->sign * b->sign;
+
+    return res;
+}
+
+/* substraction in absolute value */
 BigInt* core_sub(BigInt* a, BigInt* b) {
     /* setting up BigInt to store values */
     BigInt* res = bigint_init(a->capacity);
@@ -203,7 +228,7 @@ BigInt* core_sub(BigInt* a, BigInt* b) {
     return res;
 }
 
-/* basic addition that adds two numbers together in absolute value */
+/* addition in absolute value */
 BigInt* core_add(BigInt* a, BigInt* b) {
     /* variables */
     size_t i;
@@ -250,6 +275,61 @@ BigInt* core_add(BigInt* a, BigInt* b) {
     return res;
 }
 
+/* basic multiplication in absolute value */
+BigInt* core_mult(BigInt* a, BigInt* b) {
+    /* variables */
+    size_t i, j;
+    calc_t product;
+    calc_t carry;
+
+    /* sanity check */
+    if (!a || !b) return NULL;
+
+    /* initialize result BigInt */
+    size_t max_len = a->size + b->size;
+    BigInt* res = bigint_init(max_len);
+
+    /* safety check */
+    if (!res) return NULL;
+
+    /* setting size to max so we can write everywhere */
+    res->size = max_len;
+
+    /* multiplying every limb from b with every limb from a */
+    for (j = 0; j < b->size; j++)
+    {
+        /* new row -> reset carry */
+        carry = 0;
+
+        /* if digit in b is 0, skipping -> adds nothing */
+        if (b->limbs[j] == 0) continue;
+
+        for (i = 0; i < a->size; i++)
+        {
+            /* 
+                res->limbs[i + j] -> what we stored from previous rows
+                a[i] * b[j] -> current multiplication
+                carry -> overflow
+            */
+            product = (calc_t)res->limbs[i + j] + ((calc_t)a->limbs[i] * (calc_t)b->limbs[j]) + carry;
+
+            /* stores the lower 16bits */
+            res->limbs[i + j] = (limb_t)(product & 0xFFFF);
+
+            /* moves the upper 16 bits and saves them */
+            carry = product >> 16;
+        }
+        /* storing the last carry to limbs */
+        res->limbs[a->size + j] = (limb_t)carry;
+    }
+    /* removing zeroes from start of the array */
+    while (res->size > 1 && res->limbs[res->size - 1] == 0) {
+        res->size--;
+    }
+
+    return res;
+}
+
 /* return which number is bigger in absolute value */
 int core_compare(BigInt* a, BigInt* b) {
     /* variables */
@@ -274,7 +354,7 @@ int core_compare(BigInt* a, BigInt* b) {
     return 0;
 }
 
-/* calculates 2 to the power of $power */
+/* calculates 2 to the power of n */
 BigInt* bigint_pow2(size_t power) {
     /* how much limbs do we need */
     size_t needed_limbs = (power / 16) + 1;
@@ -296,6 +376,11 @@ BigInt* bigint_pow2(size_t power) {
     n->limbs[limb_index] = ((limb_t)1 << bit_index);
 
     return n;
+}
+
+/* checking if zero */
+int bigint_zero(BigInt* n) {
+    return (n->size == 1 && n->limbs[0] == 0);
 }
 
 /* temporary debug function*/

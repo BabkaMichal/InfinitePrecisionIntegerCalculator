@@ -91,8 +91,8 @@ BigInt* bin_to_bigint(const char* str) {
         result->sign = SIGN_NEG;
 
         /* freeing temp memory */
-        bigIntFree(raw);
-        bigIntFree(limit);
+        bigint_free(raw);
+        bigint_free(limit);
 
         return result;
     }
@@ -144,8 +144,8 @@ BigInt* hex_to_bigint(const char* str) {
         result->sign = SIGN_NEG;
 
         /* freeing temp memory */
-        bigIntFree(raw);
-        bigIntFree(limit);
+        bigint_free(raw);
+        bigint_free(limit);
 
         return result;
     }

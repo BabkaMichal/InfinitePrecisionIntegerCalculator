@@ -3,22 +3,22 @@
 #include "bigInt.h"
 
 /* TODO: shunting yard */
-/* TODO: aritmetic operations -> multiply; divide */
+/* TODO: aritmetic operations -> divide */
 /* memory will be cleaned in shunting yard */
 
 
 int main() {
-	BigInt* b = str_to_bigint("5");
-	BigInt* a = str_to_bigint("-5");
+	BigInt* b = str_to_bigint("300");
+	BigInt* a = str_to_bigint("300");
 
-	BigInt* c = bigInt_sub(a, b);
+	BigInt* c = bigint_mult(a, b);
 
 	print_debug_hex(c);
 	printf("%d",c->sign);
 
-	bigIntFree(a);
-	bigIntFree(b);
-	bigIntFree(c);
+	bigint_free(a);
+	bigint_free(b);
+	bigint_free(c);
 
 	return EXIT_SUCCESS;
 }

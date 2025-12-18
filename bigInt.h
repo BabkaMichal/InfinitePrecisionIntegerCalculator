@@ -23,18 +23,23 @@ typedef struct {
 
 /* memory functions*/
 BigInt* bigint_init(size_t cap);
-void bigIntFree(BigInt* n);
+void bigint_free(BigInt* n);
 
-/* aritmethics */
+/* aritmethics - logic */
 BigInt* bigint_pow2(size_t power);
-BigInt* bigInt_add(BigInt* a, BigInt* b);
-BigInt* bigInt_sub(BigInt* a, BigInt* b);
+BigInt* bigint_add(BigInt* a, BigInt* b);
+BigInt* bigint_sub(BigInt* a, BigInt* b);
+BigInt* bigint_mult(BigInt* a, BigInt* b);
+
+/* arithmetics - core */
 BigInt* core_sub(BigInt* a, BigInt* b);
 BigInt* core_add(BigInt* a, BigInt* b);
+BigInt* core_mult(BigInt* a, BigInt* b);
 int core_compare(BigInt* a, BigInt* b);
 
 /* helper functions */
 void bigint_mul_val_add_digit(BigInt* n, int digit, int val);
+int bigint_zero(BigInt* n);
 
 /* parsing & IO*/
 BigInt* str_to_bigint(const char* str);
