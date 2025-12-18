@@ -30,6 +30,7 @@ BigInt* bigint_pow2(size_t power);
 BigInt* bigint_add(BigInt* a, BigInt* b);
 BigInt* bigint_sub(BigInt* a, BigInt* b);
 BigInt* bigint_mult(BigInt* a, BigInt* b);
+BigInt* bigint_negate(BigInt* a);
 
 /* arithmetics - core */
 BigInt* core_sub(BigInt* a, BigInt* b);

@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include "bigInt.h"
 
-/* TODO: shunting yard */
-/* TODO: aritmetic operations -> divide */
+/* TODO: shunting yard -> dont forget "(" & ")" */
+/* TODO: aritmetic operations -> divide(full number), modulo, faktorial, powerTo */
+/* TODO: printing results in bin,dec,hex */
+/* TODO: out -> prints current result number representation -> bin,dec,hex*/
+/* TODO: quit -> ends process with EXIT_SUCCCESS */
 /* memory will be cleaned in shunting yard */
 
 

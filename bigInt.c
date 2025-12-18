@@ -93,6 +93,22 @@ void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
     }
 }
 
+/* returns oposite number */
+void bigint_negate(BigInt* a) {
+    /* sanity check */
+    if (!a) return;
+
+    /* if zero -> we need to keep sign positive */
+    if (bigint_zero(a))
+    {
+        a->sign = SIGN_POS;
+        return;
+    }
+
+    /* return the same number in absolute value, just oposite sign*/
+    a->sign *= -1;
+}
+
 /* addition with logic */
 BigInt* bigint_add(BigInt* a, BigInt* b) {
     /* variables */
