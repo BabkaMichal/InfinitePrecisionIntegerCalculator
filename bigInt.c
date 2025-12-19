@@ -7,6 +7,7 @@
 
 #define INITIALCAP 20
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define CMP_ERR -2
 
 /* initializes BigInt */
 BigInt* bigint_init(size_t cap) {
@@ -43,6 +44,41 @@ void bigint_free(BigInt* n) {
     free(n);
 }
 
+/* expanding bigint */
+int bigint_resize(BigInt* n, size_t new_size) {
+    /* sanity check */
+    if (!n) return 0;
+    
+    /* if we already have the size -> skip */
+    if (n->capacity >= new_size) return 1;
+
+    /* calculating new capacity */
+    size_t new_capacity = new_size;
+
+    /* temporary pointer if realloc fails */
+    limb_t* new_limbs = (limb_t*)realloc(n->limbs, new_capacity * sizeof(limb_t));
+
+    /* safety check */
+    if (new_limbs == NULL) {
+        fprintf(stderr, "\nFATAL ERROR: Out of memory! Allocation failed\n");
+        fprintf(stderr, "Attempted to allocate %zu limbs.\n", new_capacity);
+
+        /* if memory realocation failed, we end it */
+        exit(EXIT_FAILURE);
+    }
+
+    /* realloc will not clean out the newly allocated memory -> we do it ourselves */
+    size_t old_capacity = n->capacity;
+    memset(new_limbs + old_capacity, 0, (new_capacity - old_capacity) * sizeof(limb_t));
+
+    /* saving the new pointers to struct */
+    n->limbs = new_limbs;
+    n->capacity = new_capacity;
+
+    /* success */
+    return 1;
+}
+
 /* helper functions */
 void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
     /* variables */
@@ -67,25 +103,10 @@ void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
     /* if there is carry remaining, save to another limb */
     if (carry > 0) {
         if (n->size >= n->capacity) {
-            /* memory reallocation */
-            /* calculating new capacity */
-            size_t new_capacity = n->capacity + INITIALCAP;
-            
-            /* temporary pointer if realloc fails */
-            limb_t* new_limbs = (limb_t*)realloc(n->limbs, new_capacity * sizeof(limb_t));
-
-            /* safety check */
-            if (new_limbs == NULL) {
-                printf("Error: out of memory for realloc!\n");
+            /* memory realocation */
+            if (!bigint_resize(n, n->capacity + INITIALCAP)) {
                 return;
             }
-            /* realloc will not clean out the newly allocated memory -> we do it ourselves */
-            size_t old_capacity = n->capacity;
-            memset(new_limbs + old_capacity, 0, (new_capacity - old_capacity) * sizeof(limb_t));
-
-            /* saving the new pointers to struct */
-            n->limbs = new_limbs;
-            n->capacity = new_capacity;
         }
         /* saving the carry to next limb */
         n->limbs[n->size] = (limb_t)carry;
@@ -94,19 +115,19 @@ void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
 }
 
 /* returns oposite number */
-void bigint_negate(BigInt* a) {
+void bigint_negate(BigInt* n) {
     /* sanity check */
-    if (!a) return;
+    if (!n) return;
 
     /* if zero -> we need to keep sign positive */
-    if (bigint_zero(a))
+    if (bigint_zero(n))
     {
-        a->sign = SIGN_POS;
+        n->sign = SIGN_POS;
         return;
     }
 
     /* return the same number in absolute value, just oposite sign*/
-    a->sign *= -1;
+    n->sign *= -1;
 }
 
 /* addition with logic */
@@ -198,6 +219,50 @@ BigInt* bigint_mult(BigInt* a, BigInt* b) {
     return res;
 }
 
+/* division with sing logic */
+BigInt* bigint_div(BigInt* a, BigInt* b) {
+    /* variables */
+    BigInt* res;
+
+    /* sanity check */
+    if (!a || !b) return NULL;
+
+    /* we only want the result -> if failed NULL*/
+    if (!core_div_mod(a, b, &res, NULL)) return NULL;
+
+    /* sign logic */
+    res->sign = a->sign * b->sign;
+
+    /* we need positive 0*/
+    if (res->size == 1 && res->limbs[0] == 0) {
+        res->sign = SIGN_POS;
+    }
+
+    return res;
+}
+
+/* modulo with sign logic */
+BigInt* bigint_mod(BigInt* a, BigInt* b) {
+    /* variables */
+    BigInt* res;
+
+    /* sanity check */
+    if (!a || !b) return NULL;
+
+    /* we only want the remainder -> if failed NULL*/
+    if (!core_div_mod(a, b, NULL, &res)) return NULL;
+
+    /* mod always has the same sign as the divident */
+    res->sign = a->sign;
+
+    /* we need positive 0*/
+    if (res->size == 1 && res->limbs[0] == 0) {
+        res->sign = SIGN_POS;
+    }
+
+    return res;
+}
+
 /* substraction in absolute value */
 BigInt* core_sub(BigInt* a, BigInt* b) {
     /* setting up BigInt to store values */
@@ -237,9 +302,7 @@ BigInt* core_sub(BigInt* a, BigInt* b) {
         res->limbs[i] = (limb_t)diff;
     }
     /* removing zeroes from start of the array */
-    while (res->size > 1 && res->limbs[res->size - 1] == 0) {
-        res->size--;
-    }
+    bigint_trim(res);
 
     return res;
 }
@@ -339,11 +402,72 @@ BigInt* core_mult(BigInt* a, BigInt* b) {
         res->limbs[a->size + j] = (limb_t)carry;
     }
     /* removing zeroes from start of the array */
-    while (res->size > 1 && res->limbs[res->size - 1] == 0) {
-        res->size--;
-    }
+    bigint_trim(res);
 
     return res;
+}
+
+/* division and modulo in absolute value */
+int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remainder) {
+    /* sanity check */
+    if (!a || !b) return 0;
+
+    /* division by 0 */
+    if (b->size == 1 && b->limbs[0] == 0) {
+        return 0;
+    }
+    /* variables */
+    long i;
+    long total_bits = (long)(a->size * 16);
+
+    /* division result */
+    BigInt* Q = bigint_init(a->size);
+    /* making it so we can write everywhere */
+    Q->size = a->size;
+
+    /* remainder */
+    BigInt* R = bigint_init(1);
+
+    for (i = total_bits - 1;  i >= 0; i--)
+    {
+        /* bitshift R to left */
+        bigint_shift_left(R);
+
+        /* if current bit = 1 we add it to R */
+        if (get_bit(a, i)) {
+            R->limbs[0] |= 1;
+        }
+
+        /* removing zeroes from start of the array */
+        bigint_trim(R);
+
+        /* is remainder bigger than divisor */
+        if (core_compare(R, b) >= 0) {
+            
+            /* we sub R = R - b */
+            BigInt* temp_sub = core_sub(R, b);
+
+            /* we set the new result */
+            bigint_free(R);
+            R = temp_sub;
+
+            /* we put one into the result */
+            set_bit(Q, i);
+        }
+    }
+
+    /* trimming 0 before returning */
+    bigint_trim(Q);
+    bigint_trim(R);
+
+    /* preparing the result we need from the call */
+    if (res_quotient)  *res_quotient = Q;
+    else bigint_free(Q); 
+
+    if (res_remainder) *res_remainder = R;
+    else bigint_free(R); 
+
+    return 1;
 }
 
 /* return which number is bigger in absolute value */
@@ -352,7 +476,7 @@ int core_compare(BigInt* a, BigInt* b) {
     size_t i;
 
     /* sanity check */
-    if (!a || !b) return NULL;
+    if (!a || !b) return CMP_ERR;
 
     /* if one has more limbs -> is longer */
     if (a->size > b->size) return 1;
@@ -375,11 +499,12 @@ BigInt* bigint_pow2(size_t power) {
     /* how much limbs do we need */
     size_t needed_limbs = (power / 16) + 1;
 
-    /* sanity check */
-    if (!power || !isdigit(power)) return NULL;
 
     /* initializing bigInt + 5 for reserve */
     BigInt* n = bigint_init(needed_limbs + 5); 
+    
+    /* safety check */
+    if (!n) return NULL;
 
     /* setting needed size */
     n->size = needed_limbs;
@@ -397,6 +522,91 @@ BigInt* bigint_pow2(size_t power) {
 /* checking if zero */
 int bigint_zero(BigInt* n) {
     return (n->size == 1 && n->limbs[0] == 0);
+}
+
+void bigint_trim(BigInt* n) {
+    while (n->size > 1 && n->limbs[n->size - 1] == 0) {
+        n->size--;
+    }
+}
+
+/* gets the bit value of the index */
+int get_bit(BigInt* n, size_t bit_index) {
+    /* sanity check */
+    if (!n) return 0;
+    
+    /* calculating which limb is the bit in */
+    size_t limb_idx = bit_index / 16;
+
+    /* which exact bit it is */
+    size_t bit_pos = bit_index % 16;
+
+    /* safety memory check */
+    if (limb_idx >= n->size) return 0;
+
+    /* checks if 0 or 1 */
+    return (n->limbs[limb_idx] >> bit_pos) & 1;
+}
+
+/* sets the bit on index */
+void set_bit(BigInt* n, size_t bit_index) {
+    /* sanity check */
+    if (!n) return;
+
+    /* calculating which limb is the bit in */
+    size_t limb_idx = bit_index / 16;
+
+    /* which exact bit it is */
+    size_t bit_pos = bit_index % 16;
+
+    /* we need more space */
+    if (limb_idx >= n->size)
+    {
+        /* memory realocation */
+        if (!bigint_resize(n, n->capacity + 16)) {
+            return;
+        }
+    }
+    
+    /* sets the bit to 1 */
+    n->limbs[limb_idx] |= (1 << bit_pos);
+}
+
+/* bit shifts the whole bigint to left */
+void bigint_shift_left(BigInt* n) {
+    /* sanity check */
+    if (!n) return;
+
+    /* variables */
+    limb_t carry = 0;
+    size_t i;
+
+    /* loop through every limb */
+    for (i = 0; i < n->size; i++) {
+        /* save the upper bit */
+        limb_t next_carry = n->limbs[i] >> 15;
+
+        /* bit shift and add carry */
+        n->limbs[i] = (n->limbs[i] << 1) | carry;
+
+        /* assign carry for next loop */
+        carry = next_carry;
+    }
+
+    if (carry)
+    {
+        /* if there is carry left we need to make one more limb */
+        if (n->size == n->capacity) {
+            /* safety check */
+            if (!bigint_resize(n, n->capacity + INITIALCAP)) {
+                return;
+            }
+        }
+
+        /* we write the final carry */
+        n->limbs[n->size] = 1;
+        n->size++;
+    }
 }
 
 /* temporary debug function*/
