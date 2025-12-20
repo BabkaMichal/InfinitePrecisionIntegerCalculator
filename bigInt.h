@@ -24,6 +24,7 @@ typedef struct {
 /* memory functions*/
 BigInt* bigint_init(size_t cap);
 void bigint_free(BigInt* n);
+BigInt* bigint_copy(BigInt* src);
 
 
 /* aritmethics - logic */
@@ -32,6 +33,7 @@ BigInt* bigint_sub(BigInt* a, BigInt* b);
 BigInt* bigint_mult(BigInt* a, BigInt* b);
 BigInt* bigint_div(BigInt* a, BigInt* b);
 BigInt* bigint_mod(BigInt* a, BigInt* b);
+BigInt* bigint_pow(BigInt* n, BigInt* exp);
 void bigint_negate(BigInt* a);
 
 /* arithmetics - core */

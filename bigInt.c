@@ -79,7 +79,28 @@ int bigint_resize(BigInt* n, size_t new_size) {
     return 1;
 }
 
-/* helper functions */
+/* making new copy of bigint */
+BigInt* bigint_copy(BigInt* src) {
+    /* sanity check */
+    if (!src) return NULL;
+
+    /* keeping the capacity */
+    BigInt* copy = bigint_init(src->capacity);
+
+    /* safety check */
+    if (!copy) return NULL;
+
+    /* keeping everything */
+    copy->size = src->size;
+    copy->sign = src->sign;
+
+    /* copying memory */
+    memcpy(copy->limbs, src->limbs, src->size * sizeof(limb_t));
+
+    return copy;
+}
+
+/* multiply the bigint by value and add digit */
 void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
     /* variables */
     calc_t carry = digit;
@@ -263,6 +284,72 @@ BigInt* bigint_mod(BigInt* a, BigInt* b) {
     return res;
 }
 
+/* bigint powered to exponent */
+BigInt* bigint_pow(BigInt* n, BigInt* exp) {
+    /* sanity check */
+    if (!n || !exp) return NULL;
+
+    /* any number raised to the power of 0 is 1 */
+    if (bigint_zero(exp)) return str_to_bigint("1");
+    /* 0 raised to any power is 0 */
+    if (bigint_zero(n)) return str_to_bigint("0");
+    /* negative numbers returns fractions < 1 -> return 0 */
+    if (exp->sign == SIGN_NEG) return str_to_bigint("0");
+
+    /* result starts at 1 */
+    BigInt* res = str_to_bigint("1");
+
+    /* current base raised to power of 2 ^ i */
+    BigInt* cur = bigint_copy(n);
+    if (!cur) return NULL;
+    cur->sign = SIGN_POS;
+
+    /* finding the highest set bit to avoid iterations */
+    long total_bits = bigint_get_highest_bit(exp);
+    long i;
+
+    for (i = 0; i <= total_bits; i++)
+    {   /* if current bit == 1 -> we multiply current power with the result */
+        if (get_bit(exp, i)) {
+            BigInt* temp = bigint_mul(res, cur);
+            bigint_free(res);
+            res = temp;
+        }
+
+        /* avoid squaring in the final iteration */
+        if (i < total_bits) {
+            /* cur = cur ^ 2 */
+            BigInt* next_cur = bigint_mul(cur, cur);
+            bigint_free(cur);
+            cur = next_cur;
+        }
+    }
+    /* clean up */
+    bigint_free(cur);
+
+    /* sign logic */
+    /* if negative we check if odd or even */
+    if (n->sign == SIGN_NEG)
+    {
+        if (get_bit(exp, 0))
+        {
+            /* odd */
+            res->sign = SIGN_NEG;
+        }
+        else
+        {
+            /* even */
+            res->sign = SIGN_POS;
+        }
+    }
+    else
+    {
+        res->sign = SIGN_POS;
+    }
+
+    return res;
+}
+
 /* substraction in absolute value */
 BigInt* core_sub(BigInt* a, BigInt* b) {
     /* setting up BigInt to store values */
@@ -301,7 +388,7 @@ BigInt* core_sub(BigInt* a, BigInt* b) {
         /* saving the positive result */
         res->limbs[i] = (limb_t)diff;
     }
-    /* removing zeroes from start of the array */
+    /* triming result */
     bigint_trim(res);
 
     return res;
@@ -401,7 +488,7 @@ BigInt* core_mult(BigInt* a, BigInt* b) {
         /* storing the last carry to limbs */
         res->limbs[a->size + j] = (limb_t)carry;
     }
-    /* removing zeroes from start of the array */
+    /* trimming result */
     bigint_trim(res);
 
     return res;
@@ -416,6 +503,7 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
     if (b->size == 1 && b->limbs[0] == 0) {
         return 0;
     }
+
     /* variables */
     long i;
     long total_bits = (long)(a->size * 16);
@@ -456,7 +544,7 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
         }
     }
 
-    /* trimming 0 before returning */
+    /* trimming before returning */
     bigint_trim(Q);
     bigint_trim(R);
 
@@ -524,6 +612,7 @@ int bigint_zero(BigInt* n) {
     return (n->size == 1 && n->limbs[0] == 0);
 }
 
+/* trims zeros from start: 0001 -> 1 */
 void bigint_trim(BigInt* n) {
     while (n->size > 1 && n->limbs[n->size - 1] == 0) {
         n->size--;
@@ -548,7 +637,7 @@ int get_bit(BigInt* n, size_t bit_index) {
     return (n->limbs[limb_idx] >> bit_pos) & 1;
 }
 
-/* sets the bit on index */
+/* sets the bit to 1 on index */
 void set_bit(BigInt* n, size_t bit_index) {
     /* sanity check */
     if (!n) return;
@@ -607,6 +696,21 @@ void bigint_shift_left(BigInt* n) {
         n->limbs[n->size] = 1;
         n->size++;
     }
+}
+
+/* finds the most significant bit */
+long bigint_get_highest_bit(BigInt* n) {
+    /* variables */
+    long total_bits = (long)(n->size * 16);
+    long i;
+
+    /* looping from the back and finding first 1 */
+    for (i = total_bits - 1; i >= 0; i--) {
+        if (get_bit(n, i)) return i;
+    }
+
+    /* didnt find any */
+    return 0;
 }
 
 /* temporary debug function*/

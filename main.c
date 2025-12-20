@@ -3,7 +3,7 @@
 #include "bigInt.h"
 
 /* TODO: shunting yard -> dont forget "(" & ")" */
-/* TODO: aritmetic operations -> factorial(gg), powerTo */
+/* TODO: aritmetic operations -> factorial */
 /* TODO: printing results in bin,dec,hex */
 /* TODO: out -> prints current result number representation -> bin,dec,hex*/
 /* TODO: quit -> ends process with EXIT_SUCCCESS */
