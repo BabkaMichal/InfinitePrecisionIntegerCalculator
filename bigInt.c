@@ -311,7 +311,7 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
     for (i = 0; i <= total_bits; i++)
     {   /* if current bit == 1 -> we multiply current power with the result */
         if (get_bit(exp, i)) {
-            BigInt* temp = bigint_mul(res, cur);
+            BigInt* temp = bigint_mult(res, cur);
             bigint_free(res);
             res = temp;
         }
@@ -319,7 +319,7 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
         /* avoid squaring in the final iteration */
         if (i < total_bits) {
             /* cur = cur ^ 2 */
-            BigInt* next_cur = bigint_mul(cur, cur);
+            BigInt* next_cur = bigint_mult(cur, cur);
             bigint_free(cur);
             cur = next_cur;
         }
@@ -347,6 +347,70 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
         res->sign = SIGN_POS;
     }
 
+    return res;
+}
+
+BigInt* bigint_fact(BigInt* n) {
+    /* sanity check */
+    if (!n) return NULL;
+
+    /* variables */
+    BigInt* res;
+    BigInt* i;
+    BigInt* ONE;
+    BigInt* temp;
+
+    /* factorial of negative number doesnt exist */
+    if (n->sign == SIGN_NEG) return NULL;
+
+    /* edge case for 0! -> 1 */
+    if (bigint_zero(n)) return str_to_bigint("1");
+    
+    /*  res -> result
+        i -> iterator
+        ONE -> constant to be added */
+    res = str_to_bigint("1");
+    i = str_to_bigint("2");
+    ONE = str_to_bigint("1");
+
+    /* safety check */
+    if (!res || !i || !ONE) return NULL;
+
+    /* if i <= n */
+    while (core_compare(i, n) <= 0) {
+        /* multiplying result with current iteration */
+        temp = bigint_mult(res, i);
+
+        /* safety check */
+        if (!temp) {
+            bigint_free(res); bigint_free(i); bigint_free(ONE);
+            return NULL;
+        }
+
+        /* clean the old result and save the new one */
+        bigint_free(res);
+        res = temp;
+        
+        /* ONE++ */
+        temp = bigint_add(i, ONE);
+
+        /* safety check */
+        if (!temp) {
+            bigint_free(res); bigint_free(i); bigint_free(ONE);
+            return NULL;
+        }
+
+        /* clean the old iterator and save the new one */
+        bigint_free(i);
+        i = temp;
+    }
+
+    /* cleaning the helper variables */
+    bigint_free(i);
+    bigint_free(ONE);
+
+    /* factorial is always positive */
+    res->sign = SIGN_POS;
     return res;
 }
 
@@ -543,7 +607,6 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
             set_bit(Q, i);
         }
     }
-
     /* trimming before returning */
     bigint_trim(Q);
     bigint_trim(R);
@@ -577,7 +640,6 @@ int core_compare(BigInt* a, BigInt* b) {
         if (a->limbs[i - 1] > b->limbs[i - 1]) return 1;
         if (b->limbs[i - 1] > a->limbs[i - 1]) return -1;
     }
-
     /* they are the same */
     return 0;
 }
@@ -656,7 +718,6 @@ void set_bit(BigInt* n, size_t bit_index) {
             return;
         }
     }
-    
     /* sets the bit to 1 */
     n->limbs[limb_idx] |= (1 << bit_pos);
 }
@@ -691,7 +752,6 @@ void bigint_shift_left(BigInt* n) {
                 return;
             }
         }
-
         /* we write the final carry */
         n->limbs[n->size] = 1;
         n->size++;
@@ -708,7 +768,6 @@ long bigint_get_highest_bit(BigInt* n) {
     for (i = total_bits - 1; i >= 0; i--) {
         if (get_bit(n, i)) return i;
     }
-
     /* didnt find any */
     return 0;
 }
@@ -720,6 +779,153 @@ void print_debug_hex(BigInt* n) {
     for (i = 0; i < (int)n->size; i++) {
         /* %04x protoze tiskneme 16 bitu */
         printf("[%04x] ", n->limbs[i]);
+    }
+    printf("\n");
+}
+
+/* print bigint in hexadecimal */
+void print_hex(BigInt* n) {
+    /* sanity checks */
+    if (!n) return;
+    if (n->size == 0 || bigint_zero(n)) {
+        printf("0x0\n");
+        return;
+    }
+    /* variables */
+    int i;
+    
+    /* sign and prefix */
+    if (n->sign == SIGN_NEG) printf("-");
+    printf("0x");
+
+    /* biggest limb without padding */
+    printf("%x", n->limbs[n->size - 1]);
+
+    /* printing every limb */
+    for (i = (int)n->size - 2; i >= 0; i--) {
+        printf("%04x", n->limbs[i]);
+        
+    }
+    printf("\n");
+}
+
+/* print bigint in decimal */
+void print_dec(BigInt* n) {
+    /* sanity checks */
+    if (!n) return;
+    if (n->size == 0 || bigint_zero(n)) {
+        printf("0\n");
+        return;
+    }
+    /* sign */
+    if (n->sign == SIGN_NEG) printf("-");
+
+    /* variables */
+    /* base 10^9 -> 9 digits */
+    BigInt* billion = str_to_bigint("1000000000");
+    BigInt* temp = bigint_copy(n);
+
+    /* buffer for result */
+    /* capacity -> (n->size * 5) estimating the number of digits
+    /9 -> transfering into chunks -> one chunk = 9 digits
+    +10 -> safety */
+    int capacity = (n->size * 5) / 9 + 10;
+    calc_t* chunks = (calc_t*)malloc(capacity * sizeof(calc_t));
+    /* safety */
+    if (!chunks) {
+        bigint_free(billion);
+        bigint_free(temp);
+        return;
+    }
+
+    int count = 0;
+
+    /* main loop */
+    while (!bigint_zero(temp)) {
+        /* for saving division results */
+        BigInt* quotient = NULL;
+        BigInt* remainder = NULL;
+
+        /* divide temp by billion -> remainder to buffer, quotient to another loop */
+        if (!core_div_mod(temp, billion, &quotient, &remainder)) {
+            /* failed */
+            break;
+        }
+
+        /* put the result into calc_t -> ulong */
+        calc_t rem_val = 0;
+        if (remainder->size > 0) rem_val |= remainder->limbs[0];
+        if (remainder->size > 1) rem_val |= ((calc_t)remainder->limbs[1] << 16);
+
+        chunks[count++] = rem_val;
+
+        /* move to next step */
+        bigint_free(temp);
+        bigint_free(remainder);
+        temp = quotient;
+    }
+    /* printing the result backwards */
+    if (count > 0) {
+        /* without 0 at start */
+        printf("%lu", chunks[count - 1]);
+
+        int i;
+        /* rest with padding */
+        for (i = count - 2; i >= 0; i--) {
+            printf("%09lu", chunks[i]);
+        }
+    }
+
+    printf("\n");
+
+    /* cleanup */
+    free(chunks);
+    bigint_free(billion);
+    bigint_free(temp);
+}
+
+/* print bigint in binary */
+void print_bin(BigInt* n) {
+    /* sanity checks */
+    if (!n) return;
+    if (n->size == 0 || bigint_zero(n)) {
+        printf("0b0\n");
+        return;
+    }
+    /* variables */
+    int i, j, bit;
+    int bits_per_limb = sizeof(limb_t) * 8;
+
+    /* sign and prefix */
+    if (n->sign == SIGN_NEG) printf("-");
+    printf("0b");
+
+    /* looping limbs from back */
+    for (i = (int)n->size - 1; i >= 0; i--) {
+        /* current limb */
+        limb_t val = n->limbs[i];
+
+        /* bits in limb from back */
+        for (j = bits_per_limb - 1; j >= 0; j--) {
+
+            /* skiping first 0s */
+            if (i == n->size - 1 && j == bits_per_limb - 1) {
+                while (j >= 0 && !((val >> j) & 1)) {
+                    j--;
+                }
+                /* the number is 0 */
+                if (j < 0 && n->size == 1) {
+                    printf("0");
+                    break;
+                }
+                /* the limb was just 0 -> another limb */
+                if (j < 0) continue;
+            }
+
+            /* extract the bit and print */
+            bit = (val >> j) & 1;
+            printf("%d", bit);
+        }
     }
     printf("\n");
 }

@@ -34,6 +34,7 @@ BigInt* bigint_mult(BigInt* a, BigInt* b);
 BigInt* bigint_div(BigInt* a, BigInt* b);
 BigInt* bigint_mod(BigInt* a, BigInt* b);
 BigInt* bigint_pow(BigInt* n, BigInt* exp);
+BigInt* bigint_fact(BigInt* n);
 void bigint_negate(BigInt* a);
 
 /* arithmetics - core */
@@ -51,17 +52,19 @@ void bigint_trim(BigInt* n);
 int get_bit(BigInt* n, size_t bit_index);
 void set_bit(BigInt* n, size_t bit_index);
 void bigint_shift_left(BigInt* n);
+long bigint_get_highest_bit(BigInt* n);
 
 /* parsing & IO*/
 BigInt* str_to_bigint(const char* str);
 BigInt* dec_to_bigint(const char* str);
 BigInt* hex_to_bigint(const char* str);
 BigInt* bin_to_bigint(const char* str);
+void print_hex(BigInt* n);
+void print_dec(BigInt* n);
+void print_bin(BigInt* n);
+
 
 /* helper IO functions */
 int hex_char_to_int(char c);
-
-/* temp */
-void print_debug_hex(BigInt* n);
 
 #endif
