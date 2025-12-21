@@ -649,7 +649,6 @@ BigInt* bigint_pow2(size_t power) {
     /* how much limbs do we need */
     size_t needed_limbs = (power / 16) + 1;
 
-
     /* initializing bigInt + 5 for reserve */
     BigInt* n = bigint_init(needed_limbs + 5); 
     
@@ -770,17 +769,6 @@ long bigint_get_highest_bit(BigInt* n) {
     }
     /* didnt find any */
     return 0;
-}
-
-/* temporary debug function*/
-void print_debug_hex(BigInt* n) {
-    int i;
-    printf("Hex (16-bit chunks): ");
-    for (i = 0; i < (int)n->size; i++) {
-        /* %04x protoze tiskneme 16 bitu */
-        printf("[%04x] ", n->limbs[i]);
-    }
-    printf("\n");
 }
 
 /* print bigint in hexadecimal */

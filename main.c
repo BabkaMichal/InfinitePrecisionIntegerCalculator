@@ -3,19 +3,16 @@
 #include "bigInt.h"
 
 /* TODO: shunting yard -> dont forget "(" & ")" */
-/* TODO: aritmetic operations -> test factorial and powerto */
 /* TODO: out -> prints current result number representation -> bin,dec,hex*/
 /* TODO: quit -> ends process with EXIT_SUCCCESS */
 /* memory will be cleaned in shunting yard */
 
 
 int main() {
-	BigInt* a = str_to_bigint("1");
-	BigInt* b = str_to_bigint("-65536");
+	BigInt* a = str_to_bigint("-100");
+	BigInt* b = str_to_bigint("100");
 
-	BigInt* c = bigint_mult(a, b);
-
-	//print_debug_hex(c);
+	BigInt* c = bigint_fact(a);
 
 	print_hex(c);
 	print_bin(c);
