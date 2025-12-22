@@ -5,10 +5,6 @@
 #include <ctype.h>
 #include "bigInt.h"
 
-#define INITIALCAP 20
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define CMP_ERR -2
-
 /* initializes BigInt */
 BigInt* bigint_init(size_t cap) {
     /* memory for bigInt structure*/
@@ -565,6 +561,7 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
 
     /* division by 0 */
     if (b->size == 1 && b->limbs[0] == 0) {
+        printf("Error: Division failed (division by zero!)\n");
         return 0;
     }
 
@@ -819,6 +816,7 @@ void print_dec(BigInt* n) {
     +10 -> safety */
     int capacity = (n->size * 5) / 9 + 10;
     calc_t* chunks = (calc_t*)malloc(capacity * sizeof(calc_t));
+
     /* safety */
     if (!chunks) {
         bigint_free(billion);
@@ -888,6 +886,8 @@ void print_bin(BigInt* n) {
     if (n->sign == SIGN_NEG) printf("-");
     printf("0b");
 
+    int skipping = 1;
+
     /* looping limbs from back */
     for (i = (int)n->size - 1; i >= 0; i--) {
         /* current limb */
@@ -895,23 +895,20 @@ void print_bin(BigInt* n) {
 
         /* bits in limb from back */
         for (j = bits_per_limb - 1; j >= 0; j--) {
+            /* extract the bit */
+            bit = (val >> j) & 1;
 
-            /* skiping first 0s */
-            if (i == n->size - 1 && j == bits_per_limb - 1) {
-                while (j >= 0 && !((val >> j) & 1)) {
-                    j--;
+            /* defaultly true -> when we find first 1 we stop */
+            if (skipping) {
+                if (bit == 0) {
+                    continue;
                 }
-                /* the number is 0 */
-                if (j < 0 && n->size == 1) {
-                    printf("0");
-                    break;
+                else {
+                    skipping = 0;
                 }
-                /* the limb was just 0 -> another limb */
-                if (j < 0) continue;
             }
 
-            /* extract the bit and print */
-            bit = (val >> j) & 1;
+            /* print bit */
             printf("%d", bit);
         }
     }

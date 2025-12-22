@@ -125,7 +125,9 @@
   <ItemGroup>
     <ClCompile Include="bigInt.c" />
     <ClCompile Include="bigInt_io.c" />
+    <ClCompile Include="evaluator.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="stack.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bigInt.h" />

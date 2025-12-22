@@ -24,6 +24,12 @@
     <ClCompile Include="bigInt_io.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="stack.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="evaluator.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bigInt.h">
