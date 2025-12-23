@@ -37,6 +37,14 @@ typedef struct {
     int top;
 } OpStack;
 
+/* enum for output modes */
+typedef enum {
+    OUT_DEC,
+    OUT_HEX,
+    OUT_BIN
+} OutputMode;
+
+
 /* memory functions */
 BigInt* bigint_init(size_t cap);
 void bigint_free(BigInt* n);
@@ -78,6 +86,9 @@ BigInt* bin_to_bigint(const char* str);
 void print_hex(BigInt* n);
 void print_dec(BigInt* n);
 void print_bin(BigInt* n);
+void print_current_mode(OutputMode mode);
+void process_input(char* input_line, OutputMode mode);
+int handle_line(char* buffer, OutputMode* current_mode);
 
 /* helper IO functions */
 int hex_char_to_int(char c);
@@ -99,5 +110,10 @@ int op_stack_empty(OpStack* s);
 
 /* evaluator and shunting yard */
 BigInt* evaluate_rpn(char** tokens, int count);
+int get_precedence(char* op);
+int is_right_associative(char* op);
+char* my_strdup(const char* src);
+char** shunting_yard(char* input, int* out_count);
+
 
 #endif

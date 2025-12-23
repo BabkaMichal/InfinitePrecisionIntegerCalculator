@@ -357,7 +357,10 @@ BigInt* bigint_fact(BigInt* n) {
     BigInt* temp;
 
     /* factorial of negative number doesnt exist */
-    if (n->sign == SIGN_NEG) return NULL;
+    if (n->sign == SIGN_NEG) {
+        printf("Input of factorial must not be negative!");
+        return NULL;
+    }
 
     /* edge case for 0! -> 1 */
     if (bigint_zero(n)) return str_to_bigint("1");
@@ -561,7 +564,7 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
 
     /* division by 0 */
     if (b->size == 1 && b->limbs[0] == 0) {
-        printf("Error: Division failed (division by zero!)\n");
+        printf("Division by zero!\n");
         return 0;
     }
 

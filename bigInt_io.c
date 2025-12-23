@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 #include "bigint.h"
 
 #define INITIALCAP 20
@@ -159,5 +160,84 @@ int hex_char_to_int(char c) {
     return 0; 
 }
 
+/* print current mode */
+void print_current_mode(OutputMode mode) {
+    switch (mode) {
+    case OUT_DEC: printf("dec\n"); break;
+    case OUT_BIN: printf("bin\n"); break;
+    case OUT_HEX: printf("hex\n"); break;
+    }
+}
 
+/* handles numeric input */
+void process_input(char* input_line, OutputMode mode) {
+    /* variables */
+    int count = 0;
 
+    /* shunting yard to transfer text to tokens */
+    char** rpn_tokens = shunting_yard(input_line, &count);
+
+    /* safety */
+    if (!rpn_tokens) {
+        printf("Error: parsing failed");
+        return;
+    }
+
+    /* evaluate tokens */
+    BigInt* result = evaluate_rpn(rpn_tokens, count);
+
+    /* output */
+    if (result) {
+        /* checks which mode is used */
+        switch (mode) {
+        case OUT_DEC: print_dec(result); break;
+        case OUT_BIN: print_bin(result); break;
+        case OUT_HEX: print_hex(result); break;
+        }
+        /* cleanup */
+        bigint_free(result);
+    }
+
+    /* cleanup */
+    int i;
+    for (i = 0; i < count; i++) {
+        free(rpn_tokens[i]);
+    }
+    free(rpn_tokens);
+}
+
+/* checks if command or calculation */
+int handle_line(char* buffer, OutputMode* current_mode) {
+    /* ignore empty line */
+    if (strlen(buffer) == 0) return 1;
+
+    /* handles quit */
+    if (strcmp(buffer, "quit") == 0) return 0;
+
+    /* change of output mode */
+    if (strcmp(buffer, "bin") == 0) {
+        *current_mode = OUT_BIN;
+        printf("bin\n");
+        return 1;
+    }
+    if (strcmp(buffer, "dec") == 0) {
+        *current_mode = OUT_DEC;
+        printf("dec\n");
+        return 1;
+    }
+    if (strcmp(buffer, "hex") == 0) {
+        *current_mode = OUT_HEX;
+        printf("hex\n");
+        return 1;
+    }
+
+    /* prints out current output mode */
+    if (strcmp(buffer, "out") == 0) {
+        print_current_mode(*current_mode);
+        return 1;
+    }
+
+    /* if not command calculate it */
+    process_input(buffer, *current_mode);
+    return 1;
+}
