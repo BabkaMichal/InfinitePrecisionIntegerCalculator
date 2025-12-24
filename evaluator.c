@@ -394,10 +394,24 @@ char** shunting_yard(char* input, int* out_count) {
 
 		/* its a number */
 		if (isdigit(*p)) {
-			/* save start of number and find end of it */
+			/* save start of number */
 			char* start = p;
-			while (isdigit(*p)) p++;
 
+			/* finding end of hexadecimal number */
+			if (*p == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X')){
+				p += 2;
+				while (isxdigit(*p)) p++;
+			}
+			/* finding the end of binary number */
+			else if (*p == '0' && (*(p + 1) == 'b' || *(p + 1) == 'B')) {
+				p += 2;
+				while (*p == '0' || *p == '1') p++;
+			}
+			/* finding the end of decimal number */
+			else {
+				while (isdigit(*p)) p++;
+			}
+			
 			/* make string from number -> find length -> alocate memory -> save number -> add end character */
 			int len = p - start;
 			char* num_str = (char*)malloc(len + 1);
@@ -427,28 +441,58 @@ char** shunting_yard(char* input, int* out_count) {
 				strcpy(op, "NEG");
 			}
 
-			/* operator logic */
-			while (!op_stack_empty(&op_stack)) {
-				/* look at the top operator */
-				char* top = op_stack_peek(&op_stack);
+			/* two operators in row */
+			else if (expecting_number && strcmp(op, "!") != 0) {
+				printf("Syntax error!");
 
-				/* if start bracket we end */
-				if (strcmp(top, "(") == 0) break;
-
-				/* get priority of top and current operator */
-				int prec_op = get_precedence(op);
-				int prec_top = get_precedence(top);
-
-				/* if top stronger or equal & right associative we remove it from stack */
-				if (prec_top > prec_op || (prec_top == prec_op && !is_right_associative(op))) {
-					output_queue[output_idx++] = op_stack_pop(&op_stack);
+				/* stack cleanup */
+				while (!op_stack_empty(&op_stack)) {
+					char* garbage = op_stack_pop(&op_stack);
+					free(garbage);
 				}
-				else {
-					break;
-				}
+
+				/* queue cleanup */
+				int k;
+				for (k = 0; k < output_idx; k++) free(output_queue[k]);
+
+				free(output_queue);
+
+				return NULL;
 			}
-			/* push current operator */
-			op_stack_push(&op_stack, my_strdup(op));
+
+			/* if factorial -> put it in queue */
+			if (strcmp(op, "!") == 0) {
+				output_queue[output_idx++] = my_strdup(op);
+
+				
+			}
+			else
+			{
+				/* operator logic */
+				while (!op_stack_empty(&op_stack)) {
+					/* look at the top operator */
+					char* top = op_stack_peek(&op_stack);
+
+					/* if start bracket we end */
+					if (strcmp(top, "(") == 0) break;
+
+					/* get priority of top and current operator */
+					int prec_op = get_precedence(op);
+					int prec_top = get_precedence(top);
+
+					/* if top stronger or equal & right associative we remove it from stack */
+					if (prec_top > prec_op || (prec_top == prec_op && !is_right_associative(op))) {
+						output_queue[output_idx++] = op_stack_pop(&op_stack);
+					}
+					else {
+						break;
+					}
+				}
+				/* push current operator */
+				op_stack_push(&op_stack, my_strdup(op));
+			}
+
+			
 
 			/* we expect number, except factorial */
 			if (strcmp(op, "!") == 0) expecting_number = 0;
@@ -483,6 +527,26 @@ char** shunting_yard(char* input, int* out_count) {
 			printf("Error: Unknown character '%c'\n", *p);
 			p++;
 		}
+	}
+
+	/* if we expect number at end -> syntax error */
+	if (expecting_number)
+	{
+		printf("Syntax error!");
+
+		/* stack cleanup */
+		while (!op_stack_empty(&op_stack)) {
+			char* garbage = op_stack_pop(&op_stack);
+			free(garbage);
+		}
+
+		/* queue cleanup */
+		int k;
+		for (k = 0; k < output_idx; k++) free(output_queue[k]);
+
+		free(output_queue);
+
+		return NULL;
 	}
 
 	/* cleaning out the rest of stack to queue */

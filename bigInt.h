@@ -12,6 +12,7 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CMP_ERR -2
 #define MAX_STACK 256
+#define MAX_BUFFER 65536
 
 /* typedef */
 typedef unsigned short limb_t;
@@ -92,6 +93,9 @@ int handle_line(char* buffer, OutputMode* current_mode);
 
 /* helper IO functions */
 int hex_char_to_int(char c);
+int is_word(char* s);
+int is_incomplete(char* buffer);
+void sanitize_input(char* str);
 
 /* bigint stack */
 void bigint_stack_init(Stack* s);
@@ -114,6 +118,5 @@ int get_precedence(char* op);
 int is_right_associative(char* op);
 char* my_strdup(const char* src);
 char** shunting_yard(char* input, int* out_count);
-
 
 #endif

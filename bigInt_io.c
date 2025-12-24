@@ -179,7 +179,6 @@ void process_input(char* input_line, OutputMode mode) {
 
     /* safety */
     if (!rpn_tokens) {
-        printf("Error: parsing failed");
         return;
     }
 
@@ -237,7 +236,222 @@ int handle_line(char* buffer, OutputMode* current_mode) {
         return 1;
     }
 
+    /* has no digits and wasnt picked up by other commands -> invalid */
+    if (is_word(buffer)) {
+        printf("Invalid command \"%s\"!\n", buffer);
+        return 1;
+    }
+
     /* if not command calculate it */
     process_input(buffer, *current_mode);
     return 1;
+}
+
+/* helper class that checks if string contains numbers */
+int is_word(char* s) {
+    while (*s) {
+        if (!isalpha(*s)) return 0;
+        s++;
+    }
+    return 1;
+}
+
+/* checks if command should continue on another line */
+int is_incomplete(char* buffer) {
+    int len = strlen(buffer);
+
+    /* ignoring spaces on end */
+    while (len > 0 && isspace(buffer[len - 1])) len--;
+
+    /* empty line */
+    if (len == 0) return 0;
+
+    char last = buffer[len - 1];
+
+    /* ends with operator? */
+    if (strchr("+-*/%^", last) || last == '(') return 1;
+
+    /* ends with prefix? */
+    if (len >= 2 && buffer[len - 2] == '0' && (last == 'x' || last == 'b')) {
+        return 1;
+    }
+
+    /* if not it probably ended */
+    return 0;
+}
+
+/* fix utf 8 things */
+void sanitize_input(char* str) {
+    char* src = str;
+    char* dst = str;
+
+    while (*src) {
+        
+        if ((unsigned char)*src == 0xC2 && (unsigned char)*(src + 1) == 0x88) {
+            *dst = '^'; src += 2; dst++;
+        }
+       
+        else if ((unsigned char)*src == 0xE2 && (unsigned char)*(src + 1) == 0x88 && (unsigned char)*(src + 2) == 0x92) {
+            *dst = '-'; src += 3; dst++;
+        }
+        
+        else if ((unsigned char)*src == 0xE2 && (unsigned char)*(src + 1) == 0x80 && (unsigned char)*(src + 2) == 0x93) {
+            *dst = '-'; src += 3; dst++;
+        }
+       
+        else if (src == str && strncmp(src, "", 11) == 0) {
+            src += 11;
+        }
+        else {
+            *dst = *src; src++; dst++;
+        }
+    }
+    *dst = '\0';
+}
+
+/* print bigint in hexadecimal */
+void print_hex(BigInt* n) {
+    /* sanity checks */
+    if (!n) return;
+    if (n->size == 0 || bigint_zero(n)) {
+        printf("0x0\n");
+        return;
+    }
+    /* variables */
+    int i;
+
+    /* sign and prefix */
+    if (n->sign == SIGN_NEG) printf("-");
+    printf("0x");
+
+    /* biggest limb without padding */
+    printf("%x", n->limbs[n->size - 1]);
+
+    /* printing every limb */
+    for (i = (int)n->size - 2; i >= 0; i--) {
+        printf("%04x", n->limbs[i]);
+
+    }
+    printf("\n");
+}
+
+/* print bigint in decimal */
+void print_dec(BigInt* n) {
+    /* sanity checks */
+    if (!n) return;
+    if (n->size == 0 || bigint_zero(n)) {
+        printf("0\n");
+        return;
+    }
+    /* sign */
+    if (n->sign == SIGN_NEG) printf("-");
+
+    /* variables */
+    /* base 10^9 -> 9 digits */
+    BigInt* billion = str_to_bigint("1000000000");
+    BigInt* temp = bigint_copy(n);
+
+    /* buffer for result */
+    /* capacity -> (n->size * 5) estimating the number of digits
+    /9 -> transfering into chunks -> one chunk = 9 digits
+    +10 -> safety */
+    int capacity = (n->size * 5) / 9 + 10;
+    calc_t* chunks = (calc_t*)malloc(capacity * sizeof(calc_t));
+
+    /* safety */
+    if (!chunks) {
+        bigint_free(billion);
+        bigint_free(temp);
+        return;
+    }
+
+    int count = 0;
+
+    /* main loop */
+    while (!bigint_zero(temp)) {
+        /* for saving division results */
+        BigInt* quotient = NULL;
+        BigInt* remainder = NULL;
+
+        /* divide temp by billion -> remainder to buffer, quotient to another loop */
+        if (!core_div_mod(temp, billion, &quotient, &remainder)) {
+            /* failed */
+            break;
+        }
+
+        /* put the result into calc_t -> ulong */
+        calc_t rem_val = 0;
+        if (remainder->size > 0) rem_val |= remainder->limbs[0];
+        if (remainder->size > 1) rem_val |= ((calc_t)remainder->limbs[1] << 16);
+
+        chunks[count++] = rem_val;
+
+        /* move to next step */
+        bigint_free(temp);
+        bigint_free(remainder);
+        temp = quotient;
+    }
+    /* printing the result backwards */
+    if (count > 0) {
+        /* without 0 at start */
+        printf("%lu", chunks[count - 1]);
+
+        int i;
+        /* rest with padding */
+        for (i = count - 2; i >= 0; i--) {
+            printf("%09lu", chunks[i]);
+        }
+    }
+
+    printf("\n");
+
+    /* cleanup */
+    free(chunks);
+    bigint_free(billion);
+    bigint_free(temp);
+}
+
+/* print bigint in binary */
+void print_bin(BigInt* n) {
+    /* sanity checks */
+    if (!n) return;
+    if (n->size == 0 || bigint_zero(n)) {
+        printf("0b0\n");
+        return;
+    }
+    /* variables */
+    int i, j, bit;
+    int bits_per_limb = sizeof(limb_t) * 8;
+
+    /* sign and prefix */
+    if (n->sign == SIGN_NEG) printf("-");
+    printf("0b");
+
+    int skipping = 1;
+
+    /* looping limbs from back */
+    for (i = (int)n->size - 1; i >= 0; i--) {
+        /* current limb */
+        limb_t val = n->limbs[i];
+
+        /* bits in limb from back */
+        for (j = bits_per_limb - 1; j >= 0; j--) {
+            /* extract the bit */
+            bit = (val >> j) & 1;
+
+            /* defaultly true -> when we find first 1 we stop */
+            if (skipping) {
+                if (bit == 0) {
+                    continue;
+                }
+                else {
+                    skipping = 0;
+                }
+            }
+
+            /* print bit */
+            printf("%d", bit);
+        }
+    }
+    printf("\n");
 }
