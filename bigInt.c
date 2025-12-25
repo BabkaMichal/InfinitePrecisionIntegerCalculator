@@ -15,11 +15,13 @@ BigInt* bigint_init(size_t cap) {
 
     /* memory for the limbs */
     n->limbs = (limb_t*)calloc(cap, sizeof(limb_t));
+
     /* safety check */
     if (!n->limbs) {
         free(n);
         return NULL;
     }
+
     /* asigning values */
     n->size = 1;
     n->capacity = cap;
@@ -56,10 +58,9 @@ int bigint_resize(BigInt* n, size_t new_size) {
 
     /* safety check */
     if (new_limbs == NULL) {
-        fprintf(stderr, "\nFATAL ERROR: Out of memory! Allocation failed\n");
-        fprintf(stderr, "Attempted to allocate %zu limbs.\n", new_capacity);
+        printf("\nFATAL ERROR: Out of memory! Allocation failed\n");
 
-        /* if memory realocation failed, we end it */
+        /* if memory realocation failed, we end */
         exit(EXIT_FAILURE);
     }
 
@@ -125,6 +126,7 @@ void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
                 return;
             }
         }
+
         /* saving the carry to next limb */
         n->limbs[n->size] = (limb_t)carry;
         n->size++;
@@ -162,11 +164,13 @@ BigInt* bigint_add(BigInt* a, BigInt* b) {
         res->sign = a->sign;
         return res;
     }
+
     /* different signs */
     else
     {
         /* finding the bigger number in absolute value */
         int cmp = core_compare(a, b);
+
         /* same number */
         if (cmp == 0)
         {
@@ -175,6 +179,7 @@ BigInt* bigint_add(BigInt* a, BigInt* b) {
             res->sign = SIGN_POS;
             return res;
         }
+
         /* a is bigger */
         else if (cmp > 0) {
             /* a - b and sign from a */
@@ -182,6 +187,7 @@ BigInt* bigint_add(BigInt* a, BigInt* b) {
             res->sign = a->sign;
             return res;
         }
+
         /* b is bigger */
         else
         {
@@ -287,9 +293,11 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
 
     /* any number raised to the power of 0 is 1 */
     if (bigint_zero(exp)) return str_to_bigint("1");
+
     /* 0 raised to any power is 0 */
     if (bigint_zero(n)) return str_to_bigint("0");
-    /* negative numbers returns fractions < 1 -> return 0 */
+
+    /* negative numbers returns fractions smaller than 1 -> return 0 */
     if (exp->sign == SIGN_NEG) return str_to_bigint("0");
 
     /* result starts at 1 */
@@ -315,6 +323,7 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
                 return NULL;
             }
 
+            /* cleanup */
             bigint_free(res);
             res = temp;
         }
@@ -331,11 +340,13 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
                 return NULL;
             }
 
+            /* cleanup */
             bigint_free(copy_cur);
             bigint_free(cur);
             cur = next_cur;
         }
     }
+
     /* clean up */
     bigint_free(cur);
 
@@ -354,6 +365,8 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
             res->sign = SIGN_POS;
         }
     }
+
+    /* positive */
     else
     {
         res->sign = SIGN_POS;
@@ -443,7 +456,6 @@ BigInt* core_sub(BigInt* a, BigInt* b) {
     int borrow = 0;
     size_t i;
 
-
     for (i = 0; i < a->size; i++) {
         /* loading value from a */
         long val_a = a->limbs[i];
@@ -454,19 +466,19 @@ BigInt* core_sub(BigInt* a, BigInt* b) {
         /* a - b - number we borrowed from past calculation */
         diff = val_a - val_b - borrow;
 
-        /* borrow check */
+        /* result is negative -> we need to borrow from higher tier */
         if (diff < 0) {
-            /* result is negative -> we need to borrow from higher tier */
             diff += BASE; /* 2^16 */
             borrow = 1;    /* sets the borrow for another round */
         }
+        /* result is positive -> nothing */
         else {
-            /* result is positive -> nothing */
             borrow = 0;
         }
         /* saving the positive result */
         res->limbs[i] = (limb_t)diff;
     }
+
     /* triming result */
     bigint_trim(res);
 
@@ -590,6 +602,7 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
 
     /* division result */
     BigInt* Q = bigint_init(a->size);
+
     /* making it so we can write everywhere */
     Q->size = a->size;
 
@@ -623,6 +636,7 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
             set_bit(Q, i);
         }
     }
+
     /* trimming before returning */
     bigint_trim(Q);
     bigint_trim(R);
@@ -656,6 +670,7 @@ int core_compare(BigInt* a, BigInt* b) {
         if (a->limbs[i - 1] > b->limbs[i - 1]) return 1;
         if (b->limbs[i - 1] > a->limbs[i - 1]) return -1;
     }
+
     /* they are the same */
     return 0;
 }
@@ -733,6 +748,7 @@ void set_bit(BigInt* n, size_t bit_index) {
             return;
         }
     }
+
     /* sets the bit to 1 */
     n->limbs[limb_idx] |= (1 << bit_pos);
 }
@@ -758,15 +774,17 @@ void bigint_shift_left(BigInt* n) {
         carry = next_carry;
     }
 
+    /* if there is carry left we need to make one more limb */
     if (carry)
     {
-        /* if there is carry left we need to make one more limb */
+        /* adding the limb */
         if (n->size == n->capacity) {
             /* safety check */
             if (!bigint_resize(n, n->capacity + INITIALCAP)) {
                 return;
             }
         }
+
         /* we write the final carry */
         n->limbs[n->size] = 1;
         n->size++;
@@ -783,6 +801,7 @@ long bigint_get_highest_bit(BigInt* n) {
     for (i = total_bits - 1; i >= 0; i--) {
         if (get_bit(n, i)) return i;
     }
+
     /* didnt find any */
     return 0;
 }

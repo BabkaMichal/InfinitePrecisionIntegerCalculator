@@ -239,7 +239,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 		/* negate */
 		else if (strcmp(tok, "NEG") == 0) {
-			/* only one bigint */
+			/* getting the bigint */
 			BigInt* res = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
@@ -264,7 +264,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 		/* factorial */
 		else if (strcmp(tok, "!") == 0) {
-			/* only one bigint */
+			/* getting the bigint */
 			BigInt* a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
@@ -381,6 +381,7 @@ char** shunting_yard(char* input, int* out_count) {
 	/* variable for unary operators 1 -> number, 0 -> operand */
 	int expecting_number = 1;
 
+	/* copying the string */
 	char* p = input;
 
 	/* looping though the string */
@@ -402,11 +403,13 @@ char** shunting_yard(char* input, int* out_count) {
 				p += 2;
 				while (isxdigit(*p)) p++;
 			}
+
 			/* finding the end of binary number */
 			else if (*p == '0' && (*(p + 1) == 'b' || *(p + 1) == 'B')) {
 				p += 2;
 				while (*p == '0' || *p == '1') p++;
 			}
+
 			/* finding the end of decimal number */
 			else {
 				while (isdigit(*p)) p++;
@@ -454,7 +457,6 @@ char** shunting_yard(char* input, int* out_count) {
 				/* queue cleanup */
 				int k;
 				for (k = 0; k < output_idx; k++) free(output_queue[k]);
-
 				free(output_queue);
 
 				return NULL;
@@ -488,11 +490,10 @@ char** shunting_yard(char* input, int* out_count) {
 						break;
 					}
 				}
+
 				/* push current operator */
 				op_stack_push(&op_stack, my_strdup(op));
 			}
-
-			
 
 			/* we expect number, except factorial */
 			if (strcmp(op, "!") == 0) expecting_number = 0;
@@ -518,6 +519,7 @@ char** shunting_yard(char* input, int* out_count) {
 				output_queue[output_idx++] = top;
 			}
 			p++;
+
 			/* after brackets we expect operator */
 			expecting_number = 0;
 		}

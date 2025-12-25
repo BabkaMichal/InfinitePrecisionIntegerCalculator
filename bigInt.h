@@ -8,11 +8,12 @@
 #define SIGN_POS 1
 #define SIGN_NEG -1
 #define BASE 65536
-#define INITIALCAP 20
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CMP_ERR -2
 #define MAX_STACK 256
-#define MAX_BUFFER 65536
+#define INITIALCAP 20
+#define BUFFER 1024
+#define EXPRESSION 4096
 
 /* typedef */
 typedef unsigned short limb_t;
@@ -95,7 +96,6 @@ int handle_line(char* buffer, OutputMode* current_mode);
 int hex_char_to_int(char c);
 int is_word(char* s);
 int is_incomplete(char* buffer);
-void sanitize_input(char* str);
 
 /* bigint stack */
 void bigint_stack_init(Stack* s);

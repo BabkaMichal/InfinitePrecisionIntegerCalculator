@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include "bigint.h"
 
-#define INITIALCAP 20
-
 /* router */
 BigInt* str_to_bigint(const char* str) {
     /* sanity check */
@@ -66,23 +64,21 @@ BigInt* bin_to_bigint(const char* str) {
     /* loading raw value */
     raw = bigint_init(INITIALCAP);
     raw->sign = SIGN_POS;
-
     for (i = 0; str[i] != '\0'; i++) {
         if (str[i] == '0' || str[i] == '1') {
             bigint_mul_val_add_digit(raw, str[i] - '0', 2);
             total_bits++;
         }
     }
-    /* checking if positive/negative */
+
+    /* 0 -> positive */
     if (str[0] == '0') {
-        /* starts with 0 -> positive */
         return raw;
     }
+    /* 1 -> negative */
     else {
-        /* starts with 1 -> negative */
         /* we need to calculate 2^amount of bits - raw*/
-
-        /* calculation 2^amount of bits */
+        /* calculating 2^amount of bits */
         limit = bigint_pow2(total_bits);
 
         /* calling the substraction function */
@@ -106,8 +102,7 @@ BigInt* hex_to_bigint(const char* str) {
     BigInt* limit;
     BigInt* result;
     size_t total_bits = 0;
-    int i;
-    int first_digit_val;
+    int first_digit_val, i;
 
     /* sanity check */
     if (!str || str[0] == '\0') return NULL;
@@ -125,14 +120,16 @@ BigInt* hex_to_bigint(const char* str) {
         /* because it hex, we need to add 4 bits for one char (A -> 1010) */
         total_bits += 4;
     }
-    /* checking if positive/negative */
+
+    /* getting current value of char */
     first_digit_val = hex_char_to_int(str[0]);
+
+    /* positive */
     if (first_digit_val < 8) {
-        /* (0-7) -> positive */
         return raw;
     }
+    /* negative */
     else {
-        /* (8-15) -> negative */
         /* we need to calculate 2^amount of bits - raw*/
 
         /* calculation 2^amount of bits */
@@ -152,7 +149,7 @@ BigInt* hex_to_bigint(const char* str) {
     }
 }
 
-/* helper class to convert hex char to int */
+/* helper class to convert hex char to numeric value */
 int hex_char_to_int(char c) {
     if (isdigit(c)) return c - '0';
     if (c >= 'A' && c <= 'F') return c - 'A' + 10;
@@ -172,15 +169,13 @@ void print_current_mode(OutputMode mode) {
 /* handles numeric input */
 void process_input(char* input_line, OutputMode mode) {
     /* variables */
-    int count = 0;
+    int count = 0, i;
 
     /* shunting yard to transfer text to tokens */
     char** rpn_tokens = shunting_yard(input_line, &count);
 
     /* safety */
-    if (!rpn_tokens) {
-        return;
-    }
+    if (!rpn_tokens) return;
 
     /* evaluate tokens */
     BigInt* result = evaluate_rpn(rpn_tokens, count);
@@ -198,7 +193,6 @@ void process_input(char* input_line, OutputMode mode) {
     }
 
     /* cleanup */
-    int i;
     for (i = 0; i < count; i++) {
         free(rpn_tokens[i]);
     }
@@ -258,14 +252,16 @@ int is_word(char* s) {
 
 /* checks if command should continue on another line */
 int is_incomplete(char* buffer) {
+    /* getting length of string */
     int len = strlen(buffer);
 
-    /* ignoring spaces on end */
+    /* ignoring spaces at end */
     while (len > 0 && isspace(buffer[len - 1])) len--;
 
     /* empty line */
     if (len == 0) return 0;
 
+    /* last character */
     char last = buffer[len - 1];
 
     /* ends with operator? */
@@ -276,37 +272,8 @@ int is_incomplete(char* buffer) {
         return 1;
     }
 
-    /* if not it probably ended */
+    /* if not it ended */
     return 0;
-}
-
-/* fix utf 8 things */
-void sanitize_input(char* str) {
-    char* src = str;
-    char* dst = str;
-
-    while (*src) {
-        
-        if ((unsigned char)*src == 0xC2 && (unsigned char)*(src + 1) == 0x88) {
-            *dst = '^'; src += 2; dst++;
-        }
-       
-        else if ((unsigned char)*src == 0xE2 && (unsigned char)*(src + 1) == 0x88 && (unsigned char)*(src + 2) == 0x92) {
-            *dst = '-'; src += 3; dst++;
-        }
-        
-        else if ((unsigned char)*src == 0xE2 && (unsigned char)*(src + 1) == 0x80 && (unsigned char)*(src + 2) == 0x93) {
-            *dst = '-'; src += 3; dst++;
-        }
-       
-        else if (src == str && strncmp(src, "", 11) == 0) {
-            src += 11;
-        }
-        else {
-            *dst = *src; src++; dst++;
-        }
-    }
-    *dst = '\0';
 }
 
 /* print bigint in hexadecimal */
@@ -317,6 +284,7 @@ void print_hex(BigInt* n) {
         printf("0x0\n");
         return;
     }
+
     /* variables */
     int i;
 
@@ -343,6 +311,7 @@ void print_dec(BigInt* n) {
         printf("0\n");
         return;
     }
+
     /* sign */
     if (n->sign == SIGN_NEG) printf("-");
 
@@ -350,6 +319,7 @@ void print_dec(BigInt* n) {
     /* base 10^9 -> 9 digits */
     BigInt* billion = str_to_bigint("1000000000");
     BigInt* temp = bigint_copy(n);
+    int count = 0, i;
 
     /* buffer for result */
     /* capacity -> (n->size * 5) estimating the number of digits
@@ -365,8 +335,6 @@ void print_dec(BigInt* n) {
         return;
     }
 
-    int count = 0;
-
     /* main loop */
     while (!bigint_zero(temp)) {
         /* for saving division results */
@@ -379,24 +347,24 @@ void print_dec(BigInt* n) {
             break;
         }
 
-        /* put the result into calc_t -> ulong */
+        /* put the result into calc_t(ulong) */
         calc_t rem_val = 0;
         if (remainder->size > 0) rem_val |= remainder->limbs[0];
         if (remainder->size > 1) rem_val |= ((calc_t)remainder->limbs[1] << 16);
 
         chunks[count++] = rem_val;
 
-        /* move to next step */
+        /* move to the next step */
         bigint_free(temp);
         bigint_free(remainder);
         temp = quotient;
     }
+
     /* printing the result backwards */
     if (count > 0) {
         /* without 0 at start */
         printf("%lu", chunks[count - 1]);
 
-        int i;
         /* rest with padding */
         for (i = count - 2; i >= 0; i--) {
             printf("%09lu", chunks[i]);
@@ -419,15 +387,14 @@ void print_bin(BigInt* n) {
         printf("0b0\n");
         return;
     }
+
     /* variables */
-    int i, j, bit;
+    int i, j, bit, skipping = 1;
     int bits_per_limb = sizeof(limb_t) * 8;
 
     /* sign and prefix */
     if (n->sign == SIGN_NEG) printf("-");
     printf("0b");
-
-    int skipping = 1;
 
     /* looping limbs from back */
     for (i = (int)n->size - 1; i >= 0; i--) {

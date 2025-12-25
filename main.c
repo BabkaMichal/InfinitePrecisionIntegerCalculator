@@ -4,22 +4,23 @@
 #include <ctype.h>
 #include "bigInt.h"
 
-/* TODO: makefile */
-/* opravit binarni vypis na praci s dvojkovym doplnkem -> bin a hex */
-/* pri zpracovavani souboru vypisovat co zpracovavam */
+/* ?? opravit binarni vypis na praci s dvojkovym doplnkem -> bin a hex */
+/* projit mossem */
 
 int main(int argc, char* argv[]) {
     /* variables */
-    char buffer[1024];
-    char expression[4096] = "";
+    char buffer[BUFFER];
+    char expression[EXPRESSION] = "";
     OutputMode current_mode = OUT_DEC;
 
     /* defaulty input stream is CLI */
+    int user = 1;
     FILE* input_stream = stdin;
 
     /* if argument we change input stream to file */
     if (argc > 1) {
         input_stream = fopen(argv[1], "r");
+        user = 0;
         if (!input_stream) {
             printf("Invalid input file!\n");
             return EXIT_FAILURE;
@@ -28,7 +29,6 @@ int main(int argc, char* argv[]) {
     
     /* main loop */
     while (1) {
-
         /* end of file or error */
         if (!fgets(buffer, sizeof(buffer), input_stream)) break;
 
@@ -38,8 +38,6 @@ int main(int argc, char* argv[]) {
             buffer[len - 1] = '\0';
             len--;
         }
-
-        sanitize_input(buffer);
 
         /* empty line */
         if (strlen(buffer) == 0) continue;
@@ -58,10 +56,15 @@ int main(int argc, char* argv[]) {
         /* if not end of a expression -> another loop */
         if (is_incomplete(expression)) continue;
 
-        /* processing one line */
+        /* if from file -> print expression */
+        if (!user) {
+            printf("%s\n", expression);
+        }
+
+        /* handle one expression */
         if (!handle_line(expression, &current_mode)) {
-            /* user quit */
-            break;
+                /* user quit */
+                break;
         }
 
         /* cleaning out expression for another command */
