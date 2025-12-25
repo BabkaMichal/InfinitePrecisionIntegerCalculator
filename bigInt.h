@@ -10,7 +10,7 @@
 #define BASE 65536
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define CMP_ERR -2
-#define MAX_STACK 256
+#define BASE_STACK 256
 #define INITIALCAP 20
 #define BUFFER 1024
 #define EXPRESSION 4096
@@ -29,14 +29,16 @@ typedef struct {
 
 /* bigint stack */
 typedef struct {
-    BigInt* items[MAX_STACK];
+    BigInt** items;
     int top;
+    int capacity;
 } Stack;
 
 /* operator stack */
 typedef struct {
-    char* items[MAX_STACK];
+    char** items;
     int top;
+    int capacity;
 } OpStack;
 
 /* enum for output modes */
@@ -51,7 +53,9 @@ typedef enum {
 BigInt* bigint_init(size_t cap);
 void bigint_free(BigInt* n);
 BigInt* bigint_copy(BigInt* src);
-
+void queue_clear(char** output_queue, int output_idx);
+void bigint_stack_clear(Stack* s);
+void op_stack_clear(OpStack* s);
 
 /* aritmethics - logic */
 BigInt* bigint_add(BigInt* a, BigInt* b);
@@ -103,7 +107,6 @@ int bigint_stack_push(Stack* s, BigInt* val);
 BigInt* bigint_stack_pop(Stack* s);
 BigInt* bigint_stack_peek(Stack* s);
 int bigint_stack_empty(Stack* s);
-void bigint_clear_stack(Stack* s);
 
 /* operator stack */
 void op_stack_init(OpStack* s);

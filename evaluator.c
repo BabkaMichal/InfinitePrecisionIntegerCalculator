@@ -28,7 +28,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 				/* cleanup */
 				if (a) bigint_free(a);
 				if (b) bigint_free(b);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -40,14 +40,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 			/* calculation failed */
 			if (!res) {
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -65,7 +65,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 				/* cleanup */
 				if (a) bigint_free(a);
 				if (b) bigint_free(b);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -77,14 +77,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 			/* calculation failed */
 			if (!res) {
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -102,7 +102,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 				/* cleanup */
 				if (a) bigint_free(a);
 				if (b) bigint_free(b);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -114,14 +114,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 			/* calculation failed */
 			if (!res) {
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -139,7 +139,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 				/* cleanup */
 				if (a) bigint_free(a);
 				if (b) bigint_free(b);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -151,14 +151,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 			/* calculation failed */
 			if (!res) {
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -176,7 +176,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 				/* cleanup */
 				if (a) bigint_free(a);
 				if (b) bigint_free(b);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -188,14 +188,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 			/* calculation failed */
 			if (!res) {
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -213,7 +213,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 				/* cleanup */
 				if (a) bigint_free(a);
 				if (b) bigint_free(b);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -225,14 +225,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 			/* calculation failed */
 			if (!res) {
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -247,7 +247,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 				printf("Error: Missing operands for 'NEG'\n");
 
 				/* cleanup */
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -257,7 +257,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -271,7 +271,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			if (!a) {
 				/* cleanup */
 				printf("Error: Missing operands for '!'\n");
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
@@ -283,14 +283,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 			/* calculation failed */
 			if (!res) {
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* safety check for push */
 			if (!bigint_stack_push(&stack, res)) {
 				bigint_free(res);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -301,14 +301,14 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			/* bigint allocation failed */
 			if (!num) {
 				printf("Error: Unknown token '%s'\n", tok);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 
 			/* stack overflow */
 			if (!bigint_stack_push(&stack, num)) {
 				bigint_free(num);
-				bigint_clear_stack(&stack);
+				bigint_stack_clear(&stack);
 				return NULL;
 			}
 		}
@@ -322,7 +322,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		printf("Error: Invalid expression (too many operands left)\n");
 
 		/* cleanup */
-		bigint_clear_stack(&stack);
+		bigint_stack_clear(&stack);
 		bigint_free(final_res);
 		return NULL;
 	}
@@ -330,9 +330,12 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 	/* nothing in final_res */
 	if (!final_res) {
 		printf("Error: Empty expression or stack underflow\n");
-		bigint_clear_stack(&stack);
+		bigint_stack_clear(&stack);
 		return NULL;
 	}
+
+	/* cleanup */
+	bigint_stack_clear(&stack);
 
 	return final_res;
 }
@@ -357,6 +360,13 @@ char* my_strdup(const char* src) {
 	char* dst = malloc(strlen(src) + 1);
 	if (dst) strcpy(dst, src);
 	return dst;
+}
+
+/* helper function for cleaning queue */
+void queue_clear(char** output_queue, int output_idx) {
+	int k;
+	for (k = 0; k < output_idx; k++) free(output_queue[k]);
+	free(output_queue);
 }
 
 /* shunting yard that converts infix notation (3 + 4) to postfix notation (3 4 +) */
@@ -449,15 +459,10 @@ char** shunting_yard(char* input, int* out_count) {
 				printf("Syntax error!");
 
 				/* stack cleanup */
-				while (!op_stack_empty(&op_stack)) {
-					char* garbage = op_stack_pop(&op_stack);
-					free(garbage);
-				}
+				op_stack_clear(&op_stack);
 
 				/* queue cleanup */
-				int k;
-				for (k = 0; k < output_idx; k++) free(output_queue[k]);
-				free(output_queue);
+				queue_clear(output_queue, output_idx);
 
 				return NULL;
 			}
@@ -465,8 +470,6 @@ char** shunting_yard(char* input, int* out_count) {
 			/* if factorial -> put it in queue */
 			if (strcmp(op, "!") == 0) {
 				output_queue[output_idx++] = my_strdup(op);
-
-				
 			}
 			else
 			{
@@ -509,14 +512,31 @@ char** shunting_yard(char* input, int* out_count) {
 
 		/* ending bracket */
 		else if (*p == ')') {
+			int found_left = 0;
 			/* add the stack to queue until we find starting bracket */
 			while (!op_stack_empty(&op_stack)) {
+				/* current char */
 				char* top = op_stack_pop(&op_stack);
+				/* found ( */
 				if (strcmp(top, "(") == 0) {
 					free(top);
+					found_left = 1;
 					break;
 				}
+
+				/* push to queue */
 				output_queue[output_idx++] = top;
+			}
+
+			/* didnt find left bracket */
+			if (!found_left) {
+				printf("Error: Mismatched brackets\n");
+
+				/* stack cleanup */
+				op_stack_clear(&op_stack);
+
+				/* queue cleanup */
+				queue_clear(output_queue, output_idx);
 			}
 			p++;
 
@@ -527,7 +547,14 @@ char** shunting_yard(char* input, int* out_count) {
 		/* unknown character */
 		else {
 			printf("Error: Unknown character '%c'\n", *p);
-			p++;
+
+			/* stack cleanup */
+			op_stack_clear(&op_stack);
+
+			/* queue cleanup */
+			queue_clear(output_queue, output_idx);
+
+			return NULL;
 		}
 	}
 
@@ -537,16 +564,10 @@ char** shunting_yard(char* input, int* out_count) {
 		printf("Syntax error!");
 
 		/* stack cleanup */
-		while (!op_stack_empty(&op_stack)) {
-			char* garbage = op_stack_pop(&op_stack);
-			free(garbage);
-		}
+		op_stack_clear(&op_stack);
 
 		/* queue cleanup */
-		int k;
-		for (k = 0; k < output_idx; k++) free(output_queue[k]);
-
-		free(output_queue);
+		queue_clear(output_queue, output_idx);
 
 		return NULL;
 	}
@@ -558,12 +579,25 @@ char** shunting_yard(char* input, int* out_count) {
 		/* mismatched brackets */
 		if (strcmp(top, "(") == 0 || strcmp(top, ")") == 0) {
 			printf("Error: Mismatched brackets\n");
+
+			/* stack cleanup */
+			op_stack_clear(&op_stack);
+
+			/* queue cleanup */
+			queue_clear(output_queue, output_idx);
+
+			/* current char cleanup */
 			free(top);
+
+			return NULL;
 		}
 		else {
 			output_queue[output_idx++] = top;
 		}
 	}
+
+	/* cleanup */
+	op_stack_clear(&op_stack);
 
 	*out_count = output_idx;
 	return output_queue;
