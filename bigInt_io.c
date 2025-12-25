@@ -34,7 +34,7 @@ BigInt* dec_to_bigint(const char* str) {
     if (!str) return NULL;
 
     /* initializing bigInt */
-    n = bigint_init(INITIALCAP);
+    n = bigint_init(INITIALCAP_BI);
 
     /* if minus before number we take it as negative */
     if (str[0] == '-')
@@ -62,7 +62,7 @@ BigInt* bin_to_bigint(const char* str) {
     if (!str || str[0] == '\0') return NULL;
 
     /* loading raw value */
-    raw = bigint_init(INITIALCAP);
+    raw = bigint_init(INITIALCAP_BI);
     raw->sign = SIGN_POS;
     for (i = 0; str[i] != '\0'; i++) {
         if (str[i] == '0' || str[i] == '1') {
@@ -108,7 +108,7 @@ BigInt* hex_to_bigint(const char* str) {
     if (!str || str[0] == '\0') return NULL;
 
     /* loading raw value */
-    raw = bigint_init(INITIALCAP);
+    raw = bigint_init(INITIALCAP_BI);
     raw->sign = SIGN_POS;
 
     for (i = 0; str[i] != '\0'; i++) {
@@ -154,7 +154,7 @@ int hex_char_to_int(char c) {
     if (isdigit(c)) return c - '0';
     if (c >= 'A' && c <= 'F') return c - 'A' + 10;
     if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    return 0; 
+    return -1; 
 }
 
 /* print current mode */
@@ -421,4 +421,38 @@ void print_bin(BigInt* n) {
         }
     }
     printf("\n");
+}
+
+/* safelly strcat */
+int safe_strcat(char** expr_ptr, int* capacity, const char* to_add) {
+    /* getting current length */
+    int curr_len = strlen(*expr_ptr);
+    int add_len = strlen(to_add);
+
+    /* needed length */
+    int needed = curr_len + add_len + 1;
+
+    /* need bigger capacity */
+    if (needed > *capacity) {
+        /* current + EXPRESSION(1024) + safety(128) */
+        int new_cap = *capacity + EXPRESSION;
+        if (new_cap < needed) new_cap = needed + 128;
+
+        /* reallocation */
+        char* new_expr = (char*)realloc(*expr_ptr, new_cap * sizeof(char));
+        
+        /* safety */
+        if (!new_expr) {
+            printf("Error: Out of memory!\n");
+            return 0;
+        }
+
+        /* setting up pointers */
+        *expr_ptr = new_expr;
+        *capacity = new_cap;
+    }
+
+    /* we have space -> safely strcat */
+    strcat(*expr_ptr, to_add);
+    return 1;
 }

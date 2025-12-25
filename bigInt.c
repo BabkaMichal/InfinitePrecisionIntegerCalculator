@@ -122,7 +122,7 @@ void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
     if (carry > 0) {
         if (n->size >= n->capacity) {
             /* memory realocation */
-            if (!bigint_resize(n, n->capacity + INITIALCAP)) {
+            if (!bigint_resize(n, n->capacity + INITIALCAP_BI)) {
                 return;
             }
         }
@@ -780,7 +780,7 @@ void bigint_shift_left(BigInt* n) {
         /* adding the limb */
         if (n->size == n->capacity) {
             /* safety check */
-            if (!bigint_resize(n, n->capacity + INITIALCAP)) {
+            if (!bigint_resize(n, n->capacity + INITIALCAP_BI)) {
                 return;
             }
         }
@@ -803,5 +803,5 @@ long bigint_get_highest_bit(BigInt* n) {
     }
 
     /* didnt find any */
-    return 0;
+    return -1;
 }

@@ -4,13 +4,24 @@
 #include <ctype.h>
 #include "bigInt.h"
 
-/* ?? opravit binarni vypis na praci s dvojkovym doplnkem -> bin a hex */
-/* projit mossem */
+/* TODO: bin a hex na dvojkovy doplnkovi kod s nejmensim poctem cifer */
+/* TODO: zkontrolovat jestli to skipuje veci ze zacatku, dvojkovy kod? mozna */
 
 int main(int argc, char* argv[]) {
-    /* variables */
+    /* buffer for one line */
     char buffer[BUFFER];
-    char expression[EXPRESSION] = "";
+
+    /* expression for multiple lines */
+    int expr_capacity = EXPRESSION;
+    char* expression = (char*)malloc(EXPRESSION * sizeof(char));
+
+    /* safety */
+    if (!expression) return EXIT_FAILURE;
+
+    /* setting up empty string */
+    expression[0] = '\0';
+
+    /* default output mode = decimal */
     OutputMode current_mode = OUT_DEC;
 
     /* defaulty input stream is CLI */
@@ -23,6 +34,7 @@ int main(int argc, char* argv[]) {
         user = 0;
         if (!input_stream) {
             printf("Invalid input file!\n");
+            free(expression);
             return EXIT_FAILURE;
         }
     }
@@ -48,10 +60,10 @@ int main(int argc, char* argv[]) {
             char last = expression[expr_len - 1];
 
             if (last != 'x' && last != 'b' && last != 'X' && last != 'B') {
-                strcat(expression, " ");
+                if (!safe_strcat(&expression, &expr_capacity, " ")) break;
             }
         }
-        strcat(expression, buffer);
+        if (!safe_strcat(&expression, &expr_capacity, buffer)) break;
 
         /* if not end of a expression -> another loop */
         if (is_incomplete(expression)) continue;
@@ -75,6 +87,9 @@ int main(int argc, char* argv[]) {
     if (argc > 1 && input_stream) {
         fclose(input_stream);
     }
+
+    /* cleanup */
+    free(expression);
 
     return EXIT_SUCCESS;
 }
