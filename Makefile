@@ -1,4 +1,4 @@
-TARGET = calculator
+TARGET = calc
 
 CC = gcc
 

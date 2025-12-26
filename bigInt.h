@@ -290,7 +290,7 @@ BigInt* hex_to_bigint(const char* str);
 BigInt* bin_to_bigint(const char* str);
 
 /**
-* @brief Prints the numeric value of BigInt in hexadecimal format
+* @brief Prints the numeric value of BigInt in hexadecimal format (twos complement)
 * @param n Pointer to BigInt to be printed
 */
 void print_hex(BigInt* n);
@@ -302,7 +302,7 @@ void print_hex(BigInt* n);
 void print_dec(BigInt* n);
 
 /**
-* @brief Prints the numeric value of BigInt in binary format
+* @brief Prints the numeric value of BigInt in binary format (twos complement)
 * @param n Pointer to BigInt to be printed
 */
 void print_bin(BigInt* n);

@@ -1,5 +1,5 @@
-TARGET_64 = calculator.exe
-TARGET_32 = calculator.exe
+TARGET_64 = calc.exe
+TARGET_32 = calc.exe
 
 CC = gcc
 
@@ -21,7 +21,6 @@ win32: $(SRCS)
 	@echo "$(TARGET_32)"
 
 clean:
-	@echo "Mazu exe soubory..."
 	if exist *.exe del *.exe
 	if exist *.o del *.o
 

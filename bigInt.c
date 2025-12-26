@@ -387,7 +387,7 @@ BigInt* bigint_fact(BigInt* n) {
 
     /* factorial of negative number doesnt exist */
     if (n->sign == SIGN_NEG) {
-        printf("Input of factorial must not be negative!");
+        printf("Input of factorial must not be negative!\n");
         return NULL;
     }
 

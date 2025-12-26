@@ -4,9 +4,6 @@
 #include <ctype.h>
 #include "bigInt.h"
 
-/* TODO: bin a hex na dvojkovy doplnkovi kod s nejmensim poctem cifer */
-/* TODO: zkontrolovat jestli to skipuje veci ze zacatku, dvojkovy kod? mozna */
-
 int main(int argc, char* argv[]) {
     /* buffer for one line */
     char buffer[BUFFER];

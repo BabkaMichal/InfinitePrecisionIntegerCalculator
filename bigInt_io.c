@@ -284,21 +284,113 @@ void print_hex(BigInt* n) {
         printf("0x0\n");
         return;
     }
-
-    /* variables */
-    int i;
-
-    /* sign and prefix */
-    if (n->sign == SIGN_NEG) printf("-");
     printf("0x");
+    /* positive numbers */
+    if (n->sign != SIGN_NEG) {
+        /* if the most significant digit is 8-F we need to add 0 to start to mark it as positive  */
+        if (n->limbs[n->size - 1] & 0x8000) {
+            printf("0");
+        }
 
-    /* biggest limb without padding */
-    printf("%x", n->limbs[n->size - 1]);
+        /* rest of the numbers in hexadecimal */
+        printf("%x", n->limbs[n->size - 1]);
+        for (int i = (int)n->size - 2; i >= 0; i--) {
+            printf("%04x", n->limbs[i]);
+        }
+    }
 
-    /* printing every limb */
-    for (i = (int)n->size - 2; i >= 0; i--) {
-        printf("%04x", n->limbs[i]);
+    /* negative numbers */
+    else {
+        /* find the lowest non zero limb */
+        int lnz = 0;
+        for (int k = 0; k < (int)n->size; k++) {
+            if (n->limbs[k] != 0) {
+                lnz = k;
+                break;
+            }
+        }
 
+        /* defaultly skipping zeros */
+        int skipping = 1;
+
+        /* iterating through limbs from top */
+        for (int i = (int)n->size - 1; i >= 0; i--) {
+            /* calculating the value */
+            limb_t val;
+
+            /* limb above LNZ -> negate, the carry is gone  */
+            if (i > lnz) {
+                /* we bit negate */
+                val = ~n->limbs[i];
+            }
+
+            /* limb is lowest non zero limb -> we add the carry from calculations before */
+            else if (i == lnz) {
+                /* we negate and add 1 */
+                val = (limb_t)(-n->limbs[i]);
+            }
+
+            /* limb below LNZ -> when we negate it overflows and puts carry into another limb */
+            else {
+                /* 0 stays 0 */
+                val = 0;
+            }
+
+            /* iterate through 4 bits at a time */
+            for (int shift = 12; shift >= 0; shift -= 4) {
+                /* getting one hexa character */
+                int nibble = (val >> shift) & 0xF;
+
+                if (skipping) {
+                    /* skipping leading F */
+                    if (nibble == 0xF) {
+
+                        /* no more digits */
+                        int next_val = -1;
+
+                        /* finding the next 4 bits */
+                        if (shift > 0) {
+                            /* same limb */
+                            next_val = (val >> (shift - 4)) & 0xF;
+                        }
+                        else if (i > 0) {
+                            /* next limb -> need to calculate value*/
+                            limb_t next_raw = n->limbs[i - 1];
+                            limb_t next_trans;
+                            if ((i - 1) > lnz) next_trans = ~next_raw;
+                            else if ((i - 1) == lnz) next_trans = (limb_t)(-next_raw);
+                            else next_trans = 0;
+
+                            next_val = (next_trans >> 12) & 0xF;
+                        }
+
+                        /* last digit -> cannot skip it */
+                        if (next_val == -1) {
+                            skipping = 0;
+                            printf("f");
+                        }
+                        else if (next_val >= 8) {
+                            /* next digit is also F -> we can skip */
+                            continue;
+                        }
+                        else {
+                            /* next digit is 0-7 -> we need to keep f to says it is negative */
+                            skipping = 0;
+                            printf("f");
+                        }
+                    }
+                    else {
+                        /* start of the number */
+                        skipping = 0;
+                        printf("%x", nibble);
+                    }
+                }
+                else {
+                    /* print the rest */
+                    printf("%x", nibble);
+                }
+            }
+        }
     }
     printf("\n");
 }
@@ -388,38 +480,71 @@ void print_bin(BigInt* n) {
         return;
     }
 
-    /* variables */
-    int i, j, bit, skipping = 1;
-    int bits_per_limb = sizeof(limb_t) * 8;
-
-    /* sign and prefix */
-    if (n->sign == SIGN_NEG) printf("-");
+    /* printing prefix */
     printf("0b");
 
-    /* looping limbs from back */
-    for (i = (int)n->size - 1; i >= 0; i--) {
-        /* current limb */
-        limb_t val = n->limbs[i];
+    /* positive numbers */
+    if (n->sign != SIGN_NEG) {
+        /* must start with 0 */
+        printf("0");
 
-        /* bits in limb from back */
-        for (j = bits_per_limb - 1; j >= 0; j--) {
-            /* extract the bit */
-            bit = (val >> j) & 1;
+        /* skipping leading 0 */
+        int skipping = 1;
+        int bits_per_limb = sizeof(limb_t) * 8;
 
-            /* defaultly true -> when we find first 1 we stop */
-            if (skipping) {
-                if (bit == 0) {
-                    continue;
-                }
-                else {
+        /* looping through every limb */
+        for (int i = (int)n->size - 1; i >= 0; i--) {
+            /* value of current limb */
+            limb_t val = n->limbs[i];
+
+            /* looping through every bit in limb */
+            for (int j = bits_per_limb - 1; j >= 0; j--) {
+                /* getting current bit */
+                int bit = (val >> j) & 1;
+
+                /* skipping leading zeros */
+                if (skipping) {
+                    if (bit == 0) continue;
                     skipping = 0;
                 }
-            }
 
-            /* print bit */
-            printf("%d", bit);
+                printf("%d", bit);
+            }
         }
     }
+
+    /* negative numbers */
+    else {
+        /* find most significant bit */
+        long msb_index = bigint_get_highest_bit(n);
+        long lsb_index = -1;
+
+        /* find least significant bit */
+        for (long i = 0; i <= msb_index; i++) {
+            if (get_bit(n, i)) {
+                lsb_index = i;
+                break;
+            }
+        }
+
+        /* if power of 2, we dont need to print 1 at start */
+        if (msb_index != lsb_index) {
+            printf("1");
+        }
+
+        /* bits to the left of LSB are inverted, rest stays the same */
+        for (long i = msb_index; i >= 0; i--) {
+            int bit = get_bit(n, i);
+
+            if (i > lsb_index) {
+                printf("%d", !bit);
+            }
+            else {
+                printf("%d", bit);
+            }
+        }
+    }
+
     printf("\n");
 }
 
