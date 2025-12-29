@@ -5,12 +5,19 @@
 #include "bigInt.h"
 
 int main(int argc, char* argv[]) {
+    /* variables */
+    int len, expr_len, expr_capacity, user;
+    char last;
+    char* expression;
+    OutputMode current_mode;
+    FILE* input_stream;
+
     /* buffer for one line */
     char buffer[BUFFER];
 
     /* expression for multiple lines */
-    int expr_capacity = EXPRESSION;
-    char* expression = (char*)malloc(EXPRESSION * sizeof(char));
+    expr_capacity = EXPRESSION;
+    expression = (char*)malloc(EXPRESSION * sizeof(char));
 
     /* safety */
     if (!expression) return EXIT_FAILURE;
@@ -19,11 +26,11 @@ int main(int argc, char* argv[]) {
     expression[0] = '\0';
 
     /* default output mode = decimal */
-    OutputMode current_mode = OUT_DEC;
+    current_mode = OUT_DEC;
 
     /* defaulty input stream is CLI */
-    int user = 1;
-    FILE* input_stream = stdin;
+    user = 1;
+    input_stream = stdin;
 
     /* if argument we change input stream to file */
     if (argc > 1) {
@@ -38,11 +45,12 @@ int main(int argc, char* argv[]) {
     
     /* main loop */
     while (1) {
+        
         /* end of file or error */
         if (!fgets(buffer, sizeof(buffer), input_stream)) break;
 
         /* remove whitespaces from end */
-        int len = strlen(buffer);
+        len = strlen(buffer);
         while (len > 0 && (buffer[len - 1] == '\n' || buffer[len - 1] == '\r' || isspace(buffer[len - 1]))) {
             buffer[len - 1] = '\0';
             len--;
@@ -52,9 +60,9 @@ int main(int argc, char* argv[]) {
         if (strlen(buffer) == 0) continue;
 
         /* concating lines if multiple */
-        int expr_len = strlen(expression);
+        expr_len = strlen(expression);
         if (expr_len > 0) {
-            char last = expression[expr_len - 1];
+            last = expression[expr_len - 1];
 
             if (last != 'x' && last != 'b' && last != 'X' && last != 'B') {
                 if (!safe_strcat(&expression, &expr_capacity, " ")) break;

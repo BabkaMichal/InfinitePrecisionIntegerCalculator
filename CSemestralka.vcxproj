@@ -123,14 +123,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="bigInt.c" />
-    <ClCompile Include="bigInt_io.c" />
+    <ClCompile Include="bigint.c" />
+    <ClCompile Include="bigint_io.c" />
     <ClCompile Include="evaluator.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="stack.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bigInt.h" />
+    <ClInclude Include="bigint.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

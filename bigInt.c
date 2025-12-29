@@ -7,8 +7,11 @@
 
 /* initializes BigInt */
 BigInt* bigint_init(size_t cap) {
+    /* variables */
+    BigInt* n;
+
     /* memory for bigInt structure*/
-    BigInt* n = (BigInt*)malloc(sizeof(BigInt));
+    n = (BigInt*)malloc(sizeof(BigInt));
 
     /* sanity check */
     if (!n) return NULL;
@@ -44,6 +47,10 @@ void bigint_free(BigInt* n) {
 
 /* expanding bigint */
 int bigint_resize(BigInt* n, size_t new_size) {
+    /* variables */
+    size_t new_capacity, old_capacity;
+    limb_t* new_limbs;
+
     /* sanity check */
     if (!n) return 0;
     
@@ -51,10 +58,10 @@ int bigint_resize(BigInt* n, size_t new_size) {
     if (n->capacity >= new_size) return 1;
 
     /* calculating new capacity */
-    size_t new_capacity = new_size;
+    new_capacity = new_size;
 
     /* temporary pointer if realloc fails */
-    limb_t* new_limbs = (limb_t*)realloc(n->limbs, new_capacity * sizeof(limb_t));
+    new_limbs = (limb_t*)realloc(n->limbs, new_capacity * sizeof(limb_t));
 
     /* safety check */
     if (new_limbs == NULL) {
@@ -65,7 +72,7 @@ int bigint_resize(BigInt* n, size_t new_size) {
     }
 
     /* realloc will not clean out the newly allocated memory -> we do it ourselves */
-    size_t old_capacity = n->capacity;
+    old_capacity = n->capacity;
     memset(new_limbs + old_capacity, 0, (new_capacity - old_capacity) * sizeof(limb_t));
 
     /* saving the new pointers to struct */
@@ -78,11 +85,14 @@ int bigint_resize(BigInt* n, size_t new_size) {
 
 /* making new copy of bigint */
 BigInt* bigint_copy(BigInt* src) {
+    /* variables */
+    BigInt* copy;
+
     /* sanity check */
     if (!src) return NULL;
 
     /* keeping the capacity */
-    BigInt* copy = bigint_init(src->capacity);
+    copy = bigint_init(src->capacity);
 
     /* safety check */
     if (!copy) return NULL;
@@ -100,8 +110,7 @@ BigInt* bigint_copy(BigInt* src) {
 /* multiply the bigint by value and add digit */
 void bigint_mul_val_add_digit(BigInt* n, int digit, int val) {
     /* variables */
-    calc_t carry = digit;
-    calc_t current;
+    calc_t carry = digit, current;
     size_t i;
 
     /* sanity check */
@@ -288,6 +297,10 @@ BigInt* bigint_mod(BigInt* a, BigInt* b) {
 
 /* bigint powered to exponent */
 BigInt* bigint_pow(BigInt* n, BigInt* exp) {
+    /* variables */
+    long total_bits, i;
+    BigInt *res, *cur, *temp, *copy_cur, *next_cur;
+
     /* sanity check */
     if (!n || !exp) return NULL;
 
@@ -301,21 +314,20 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
     if (exp->sign == SIGN_NEG) return str_to_bigint("0");
 
     /* result starts at 1 */
-    BigInt* res = str_to_bigint("1");
+    res = str_to_bigint("1");
 
     /* current base raised to power of 2 ^ i */
-    BigInt* cur = bigint_copy(n);
+    cur = bigint_copy(n);
     if (!cur) return NULL;
     cur->sign = SIGN_POS;
 
     /* finding the highest set bit to avoid iterations */
-    long total_bits = bigint_get_highest_bit(exp);
-    long i;
+    total_bits = bigint_get_highest_bit(exp);
 
     for (i = 0; i <= total_bits; i++) {
         /* if current bit == 1 -> we multiply current power with the result */
         if (get_bit(exp, i)) {
-            BigInt* temp = bigint_mult(res, cur);
+            temp = bigint_mult(res, cur);
 
             /* safety */
             if (!temp) {
@@ -331,8 +343,8 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
         /* avoid squaring in the final iteration */
         if (i < total_bits) {
             /* cur = cur ^ 2 */
-            BigInt* copy_cur = bigint_copy(cur);
-            BigInt* next_cur = bigint_mult(copy_cur, cur);
+            copy_cur = bigint_copy(cur);
+            next_cur = bigint_mult(copy_cur, cur);
 
             /* safety */
             if (!next_cur) {
@@ -376,14 +388,11 @@ BigInt* bigint_pow(BigInt* n, BigInt* exp) {
 }
 
 BigInt* bigint_fact(BigInt* n) {
+    /* variables */
+    BigInt* res, * i, * ONE, * temp;
+
     /* sanity check */
     if (!n) return NULL;
-
-    /* variables */
-    BigInt* res;
-    BigInt* i;
-    BigInt* ONE;
-    BigInt* temp;
 
     /* factorial of negative number doesnt exist */
     if (n->sign == SIGN_NEG) {
@@ -444,24 +453,26 @@ BigInt* bigint_fact(BigInt* n) {
 
 /* substraction in absolute value */
 BigInt* core_sub(BigInt* a, BigInt* b) {
-    /* setting up BigInt to store values */
-    BigInt* res = bigint_init(a->capacity);
-    res->size = a->size;
+    /* variables */
+    long diff, val_a, val_b;
+    int borrow;
+    size_t i;
+    BigInt* res;
+    borrow = 0;
 
     /* sanity check */
     if (!a || !b) return NULL;
 
-    /* variables */
-    long diff;
-    int borrow = 0;
-    size_t i;
+    /* setting up BigInt to store values */
+    res = bigint_init(a->capacity);
+    res->size = a->size;
 
     for (i = 0; i < a->size; i++) {
         /* loading value from a */
-        long val_a = a->limbs[i];
+        val_a = a->limbs[i];
 
         /* loading value from b (if out of numbers -> 0) */
-        long val_b = (i < b->size) ? b->limbs[i] : 0;
+        val_b = (i < b->size) ? b->limbs[i] : 0;
 
         /* a - b - number we borrowed from past calculation */
         diff = val_a - val_b - borrow;
@@ -488,16 +499,16 @@ BigInt* core_sub(BigInt* a, BigInt* b) {
 /* addition in absolute value */
 BigInt* core_add(BigInt* a, BigInt* b) {
     /* variables */
-    size_t i;
-    calc_t sum;
-    calc_t carry = 0;
+    size_t i, max_len;
+    calc_t carry = 0, sum, val_a, val_b;
+    BigInt* res;
 
     /* sanity check */
     if (!a || !b) return NULL;
 
     /* initialize result BigInt -> can maximaly be larger than the max + 1 limb */
-    size_t max_len = MAX(a->size, b->size);
-    BigInt* res = bigint_init(max_len + 1);
+    max_len = MAX(a->size, b->size);
+    res = bigint_init(max_len + 1);
 
     /* safety check */
     if (!res) return NULL;
@@ -506,8 +517,8 @@ BigInt* core_add(BigInt* a, BigInt* b) {
     for (i = 0; i < max_len; i++)
     {
         /* load values from a,b */
-        calc_t val_a = (i < a->size) ? a->limbs[i] : 0;
-        calc_t val_b = (i < b->size) ? b->limbs[i] : 0;
+        val_a = (i < a->size) ? a->limbs[i] : 0;
+        val_b = (i < b->size) ? b->limbs[i] : 0;
 
         /* calulates sum of current limbs and carry from before*/
         sum = val_a + val_b + carry;
@@ -535,16 +546,16 @@ BigInt* core_add(BigInt* a, BigInt* b) {
 /* basic multiplication in absolute value */
 BigInt* core_mult(BigInt* a, BigInt* b) {
     /* variables */
-    size_t i, j;
-    calc_t product;
-    calc_t carry;
+    size_t i, j, max_len;
+    calc_t product, carry;
+    BigInt* res;
 
     /* sanity check */
     if (!a || !b) return NULL;
 
     /* initialize result BigInt */
-    size_t max_len = a->size + b->size;
-    BigInt* res = bigint_init(max_len);
+    max_len = a->size + b->size;
+    res = bigint_init(max_len);
 
     /* safety check */
     if (!res) return NULL;
@@ -587,6 +598,10 @@ BigInt* core_mult(BigInt* a, BigInt* b) {
 
 /* division and modulo in absolute value */
 int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remainder) {
+    /* variables */
+    BigInt *R, *temp_sub, *Q;
+    long total_bits = (long)(a->size * 16), i;
+
     /* sanity check */
     if (!a || !b) return 0;
 
@@ -596,18 +611,14 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
         return 0;
     }
 
-    /* variables */
-    long i;
-    long total_bits = (long)(a->size * 16);
-
     /* division result */
-    BigInt* Q = bigint_init(a->size);
+    Q = bigint_init(a->size);
 
     /* making it so we can write everywhere */
     Q->size = a->size;
 
     /* remainder */
-    BigInt* R = bigint_init(1);
+    R = bigint_init(1);
 
     for (i = total_bits - 1;  i >= 0; i--)
     {
@@ -626,7 +637,7 @@ int core_div_mod(BigInt* a, BigInt* b, BigInt** res_quotient, BigInt** res_remai
         if (core_compare(R, b) >= 0) {
             
             /* we sub R = R - b */
-            BigInt* temp_sub = core_sub(R, b);
+            temp_sub = core_sub(R, b);
 
             /* we set the new result */
             bigint_free(R);
@@ -677,11 +688,15 @@ int core_compare(BigInt* a, BigInt* b) {
 
 /* calculates 2 to the power of n */
 BigInt* bigint_pow2(size_t power) {
+    /* variables */
+    size_t limb_index, bit_index, needed_limbs;
+    BigInt* n;
+
     /* how much limbs do we need */
-    size_t needed_limbs = (power / 16) + 1;
+    needed_limbs = (power / 16) + 1;
 
     /* initializing bigInt + 5 for reserve */
-    BigInt* n = bigint_init(needed_limbs + 5); 
+    n = bigint_init(needed_limbs + 5); 
     
     /* safety check */
     if (!n) return NULL;
@@ -690,8 +705,8 @@ BigInt* bigint_pow2(size_t power) {
     n->size = needed_limbs;
 
     /* setting just one bit */
-    size_t limb_index = power / 16;
-    size_t bit_index = power % 16;
+    limb_index = power / 16;
+    bit_index = power % 16;
 
     /* multiply binary number by 2 (bitshift to left) */
     n->limbs[limb_index] = ((limb_t)1 << bit_index);
@@ -713,14 +728,17 @@ void bigint_trim(BigInt* n) {
 
 /* gets the bit value of the index */
 int get_bit(BigInt* n, size_t bit_index) {
+    /* variables */
+    size_t limb_idx, bit_pos;
+
     /* sanity check */
     if (!n) return 0;
     
     /* calculating which limb is the bit in */
-    size_t limb_idx = bit_index / 16;
+    limb_idx = bit_index / 16;
 
     /* which exact bit it is */
-    size_t bit_pos = bit_index % 16;
+    bit_pos = bit_index % 16;
 
     /* safety memory check */
     if (limb_idx >= n->size) return 0;
@@ -731,14 +749,17 @@ int get_bit(BigInt* n, size_t bit_index) {
 
 /* sets the bit to 1 on index */
 void set_bit(BigInt* n, size_t bit_index) {
+    /* variables */
+    size_t limb_idx, bit_pos;
+
     /* sanity check */
     if (!n) return;
 
     /* calculating which limb is the bit in */
-    size_t limb_idx = bit_index / 16;
+    limb_idx = bit_index / 16;
 
     /* which exact bit it is */
-    size_t bit_pos = bit_index % 16;
+    bit_pos = bit_index % 16;
 
     /* we need more space */
     if (limb_idx >= n->size)
@@ -755,17 +776,19 @@ void set_bit(BigInt* n, size_t bit_index) {
 
 /* bit shifts the whole bigint to left */
 void bigint_shift_left(BigInt* n) {
+    /* variables */
+    limb_t carry, next_carry;
+    size_t i;
+
     /* sanity check */
     if (!n) return;
 
-    /* variables */
-    limb_t carry = 0;
-    size_t i;
+    carry = 0;
 
     /* loop through every limb */
     for (i = 0; i < n->size; i++) {
         /* save the upper bit */
-        limb_t next_carry = n->limbs[i] >> 15;
+        next_carry = n->limbs[i] >> 15;
 
         /* bit shift and add carry */
         n->limbs[i] = (n->limbs[i] << 1) | carry;
@@ -794,8 +817,7 @@ void bigint_shift_left(BigInt* n) {
 /* finds the most significant bit */
 long bigint_get_highest_bit(BigInt* n) {
     /* variables */
-    long total_bits = (long)(n->size * 16);
-    long i;
+    long total_bits = (long)(n->size * 16), i;
 
     /* looping from the back and finding first 1 */
     for (i = total_bits - 1; i >= 0; i--) {

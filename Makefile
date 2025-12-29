@@ -1,23 +1,15 @@
-TARGET = calc
+CC=gcc
+CFLAGS=-Wall -Wextra -std=c89 -pedantic -ansi
+LIBS=-lm
 
-CC = gcc
-
-CFLAGS = -Wall -Wextra -g -O2
-
-LIBS = -lm
-
-SRCS = $(wildcard *.c)
-OBJS = $(SRCS:.c=.o)
-
-all: $(TARGET)
-
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+TARGET=calc.exe
+OBJ=main.o bigint.o stack.o evaluator.o bigint_io.o
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(TARGET): $(OBJ)
+	$(CC) $(OBJ) -o $(TARGET) $(LIBS)
 
 clean:
-	rm -f $(TARGET) $(OBJS)
-
-.PHONY: all clean
+	rm -f $(TARGET) $(OBJ)

@@ -18,10 +18,10 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bigInt.c">
+    <ClCompile Include="bigint.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bigInt_io.c">
+    <ClCompile Include="bigint_io.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stack.c">
@@ -32,7 +32,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bigInt.h">
+    <ClInclude Include="bigint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

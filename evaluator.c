@@ -5,21 +5,25 @@
 #include "bigInt.h"
 
 BigInt* evaluate_rpn(char** tokens, int count) {
-	/* stack inicialization */
+	/* variables */
 	Stack stack;
+	int i;
+	BigInt *a, *b, *res, *num, *final_res;
+	char* tok;
+
+	/* stack inicialization */
 	bigint_stack_init(&stack);
 
 	/* looping through token array */
-	int i;
 	for (i = 0; i < count; i++) {
 		/* current token */
-		char* tok = tokens[i];
+		tok = tokens[i];
 
 		/* addition */
 		if (strcmp(tok, "+") == 0) {
 			/* first b then a */
-			BigInt* b = bigint_stack_pop(&stack);
-			BigInt* a = bigint_stack_pop(&stack);
+			b = bigint_stack_pop(&stack);
+			a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!a || !b) {
@@ -33,7 +37,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			}
 
 			/* result */
-			BigInt* res = bigint_add(a, b);
+			res = bigint_add(a, b);
 
 			/* cleanup */
 			bigint_free(a); bigint_free(b);
@@ -55,8 +59,8 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		/* substraction */
 		else if (strcmp(tok, "-") == 0) {
 			/* first b then a */
-			BigInt* b = bigint_stack_pop(&stack);
-			BigInt* a = bigint_stack_pop(&stack);
+			b = bigint_stack_pop(&stack);
+			a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!a || !b) {
@@ -70,7 +74,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			}
 
 			/* result */
-			BigInt* res = bigint_sub(a, b);
+			res = bigint_sub(a, b);
 
 			/* cleanup */
 			bigint_free(a); bigint_free(b);
@@ -92,8 +96,8 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		/* multiplication */
 		else if (strcmp(tok, "*") == 0) {
 			/* first b then a */
-			BigInt* b = bigint_stack_pop(&stack);
-			BigInt* a = bigint_stack_pop(&stack);
+			b = bigint_stack_pop(&stack);
+			a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!a || !b) {
@@ -107,7 +111,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			}
 
 			/* result */
-			BigInt* res = bigint_mult(a, b);
+			res = bigint_mult(a, b);
 
 			/* cleanup */
 			bigint_free(a); bigint_free(b);
@@ -129,8 +133,8 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		/* division */
 		else if (strcmp(tok, "/") == 0) {
 			/* first b then a */
-			BigInt* b = bigint_stack_pop(&stack);
-			BigInt* a = bigint_stack_pop(&stack);
+			b = bigint_stack_pop(&stack);
+			a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!a || !b) {
@@ -144,7 +148,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			}
 
 			/* result */
-			BigInt* res = bigint_div(a, b);
+			res = bigint_div(a, b);
 
 			/* cleanup */
 			bigint_free(a); bigint_free(b);
@@ -166,8 +170,8 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		/* modulo */
 		else if (strcmp(tok, "%") == 0) {
 			/* first b then a */
-			BigInt* b = bigint_stack_pop(&stack);
-			BigInt* a = bigint_stack_pop(&stack);
+			b = bigint_stack_pop(&stack);
+			a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!a || !b) {
@@ -181,7 +185,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			}
 
 			/* result */
-			BigInt* res = bigint_mod(a, b);
+			res = bigint_mod(a, b);
 
 			/* cleanup */
 			bigint_free(a); bigint_free(b);
@@ -203,8 +207,8 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		/* power to */
 		else if (strcmp(tok, "^") == 0) {
 			/* first b then a */
-			BigInt* b = bigint_stack_pop(&stack);
-			BigInt* a = bigint_stack_pop(&stack);
+			b = bigint_stack_pop(&stack);
+			a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!a || !b) {
@@ -218,7 +222,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			}
 
 			/* result */
-			BigInt* res = bigint_pow(a, b);
+			res = bigint_pow(a, b);
 
 			/* cleanup */
 			bigint_free(a); bigint_free(b);
@@ -240,7 +244,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		/* negate */
 		else if (strcmp(tok, "NEG") == 0) {
 			/* getting the bigint */
-			BigInt* res = bigint_stack_pop(&stack);
+			res = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!res) {
@@ -265,7 +269,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 		/* factorial */
 		else if (strcmp(tok, "!") == 0) {
 			/* getting the bigint */
-			BigInt* a = bigint_stack_pop(&stack);
+			a = bigint_stack_pop(&stack);
 
 			/* not enought operands on stack */
 			if (!a) {
@@ -276,7 +280,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 			}
 
 			/* result */
-			BigInt* res = bigint_fact(a);
+			res = bigint_fact(a);
 
 			/* cleanup */
 			bigint_free(a);
@@ -297,7 +301,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 
 		/* must be a number */
 		else {
-			BigInt* num = str_to_bigint(tok);
+			num = str_to_bigint(tok);
 			/* bigint allocation failed */
 			if (!num) {
 				printf("Error: Unknown token '%s'\n", tok);
@@ -315,7 +319,7 @@ BigInt* evaluate_rpn(char** tokens, int count) {
 	}
 
 	/* there should remain only one number */
-	BigInt* final_res = bigint_stack_pop(&stack);
+	final_res = bigint_stack_pop(&stack);
 
 	/* if something remain -> error */
 	if (!bigint_stack_empty(&stack)) {
@@ -357,23 +361,33 @@ int is_right_associative(char* op) {
 
 /* creates a copy of string */
 char* my_strdup(const char* src) {
-	char* dst = malloc(strlen(src) + 1);
+	/* variables */
+	char* dst;
+
+	dst = malloc(strlen(src) + 1);
 	if (dst) strcpy(dst, src);
 	return dst;
 }
 
 /* helper function for cleaning queue */
 void queue_clear(char** output_queue, int output_idx) {
-	int k;
-	for (k = 0; k < output_idx; k++) free(output_queue[k]);
+	int i;
+	for (i = 0; i < output_idx; i++) free(output_queue[i]);
 	free(output_queue);
 }
 
 /* shunting yard that converts infix notation (3 + 4) to postfix notation (3 4 +) */
 char** shunting_yard(char* input, int* out_count) {
+	/* variables */
+	int capacity, output_idx, expecting_number, len, prec_op, prec_top, found_left;
+	char** output_queue;
+	OpStack op_stack;
+	char *p, *start, *num_str, *top;
+	char op[4];
+
 	/* preparing the queue */
-	int capacity = strlen(input) + 10;
-	char** output_queue = (char**)malloc(capacity * sizeof(char*));
+	capacity = strlen(input) + 10;
+	output_queue = (char**)malloc(capacity * sizeof(char*));
 
 	/* safety */
 	if (!output_queue) {
@@ -382,17 +396,16 @@ char** shunting_yard(char* input, int* out_count) {
 	}
 
 	/* index for queue */
-	int output_idx = 0;
+	output_idx = 0;
 
 	/* preparing the operator stack */
-	OpStack op_stack;
 	op_stack_init(&op_stack);
 
 	/* variable for unary operators 1 -> number, 0 -> operand */
-	int expecting_number = 1;
+	expecting_number = 1;
 
 	/* copying the string */
-	char* p = input;
+	p = input;
 
 	/* looping though the string */
 	while (*p) {
@@ -406,7 +419,7 @@ char** shunting_yard(char* input, int* out_count) {
 		/* its a number */
 		if (isdigit(*p)) {
 			/* save start of number */
-			char* start = p;
+			start = p;
 
 			/* finding end of hexadecimal number */
 			if (*p == '0' && (*(p + 1) == 'x' || *(p + 1) == 'X')){
@@ -426,8 +439,8 @@ char** shunting_yard(char* input, int* out_count) {
 			}
 			
 			/* make string from number -> find length -> alocate memory -> save number -> add end character */
-			int len = p - start;
-			char* num_str = (char*)malloc(len + 1);
+			len = p - start;
+			num_str = (char*)malloc(len + 1);
 			strncpy(num_str, start, len);
 			num_str[len] = '\0';
 
@@ -440,7 +453,7 @@ char** shunting_yard(char* input, int* out_count) {
 
 		/* its operand or bracket */
 		/* buffer for operand */
-		char op[4] = { 0 };
+		op[0] = 0; op[1] = 0; op[2] = 0; op[3] = 0;
 
 		/* finding operator */
 		if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '%' || *p == '^' || *p == '!') {
@@ -476,14 +489,14 @@ char** shunting_yard(char* input, int* out_count) {
 				/* operator logic */
 				while (!op_stack_empty(&op_stack)) {
 					/* look at the top operator */
-					char* top = op_stack_peek(&op_stack);
+					top = op_stack_peek(&op_stack);
 
 					/* if start bracket we end */
 					if (strcmp(top, "(") == 0) break;
 
 					/* get priority of top and current operator */
-					int prec_op = get_precedence(op);
-					int prec_top = get_precedence(top);
+					prec_op = get_precedence(op);
+					prec_top = get_precedence(top);
 
 					/* if top stronger or equal & right associative we remove it from stack */
 					if (prec_top > prec_op || (prec_top == prec_op && !is_right_associative(op))) {
@@ -512,11 +525,11 @@ char** shunting_yard(char* input, int* out_count) {
 
 		/* ending bracket */
 		else if (*p == ')') {
-			int found_left = 0;
+			found_left = 0;
 			/* add the stack to queue until we find starting bracket */
 			while (!op_stack_empty(&op_stack)) {
 				/* current char */
-				char* top = op_stack_pop(&op_stack);
+				top = op_stack_pop(&op_stack);
 				/* found ( */
 				if (strcmp(top, "(") == 0) {
 					free(top);
@@ -574,7 +587,7 @@ char** shunting_yard(char* input, int* out_count) {
 
 	/* cleaning out the rest of stack to queue */
 	while (!op_stack_empty(&op_stack)) {
-		char* top = op_stack_pop(&op_stack);
+		top = op_stack_pop(&op_stack);
 
 		/* mismatched brackets */
 		if (strcmp(top, "(") == 0 || strcmp(top, ")") == 0) {

@@ -11,11 +11,15 @@ void bigint_stack_init(Stack* s) {
 
 /* pushes bigint onto stack */
 int bigint_stack_push(Stack* s, BigInt* val) {
+    /* variables */
+    int new_cap;
+    BigInt** new_items;
+
     /* need bigger stack */
     if (s->top >= s->capacity - 1) {
         /* size + BASE_STACK */
-        int new_cap = s->capacity + BASE_STACK;
-        BigInt** new_items = realloc(s->items, new_cap * sizeof(BigInt*));
+        new_cap = s->capacity + BASE_STACK;
+        new_items = realloc(s->items, new_cap * sizeof(BigInt*));
 
         /* safety */
         if (!new_items) return 0;
@@ -80,11 +84,15 @@ void op_stack_init(OpStack* s) {
 
 /* pushes operator onto stack */
 int op_stack_push(OpStack* s, char* op) {
+    /* variables */
+    int new_cap;
+    char** new_items;
+
     /* need bigger stack */
     if (s->top >= s->capacity - 1) {
         /* size + BASE_STACK */
-        int new_cap = s->capacity + BASE_STACK;
-        char** new_items = realloc(s->items, new_cap * sizeof(char*));
+        new_cap = s->capacity + BASE_STACK;
+        new_items = realloc(s->items, new_cap * sizeof(char*));
 
         /* safety */
         if (!new_items) return 0;

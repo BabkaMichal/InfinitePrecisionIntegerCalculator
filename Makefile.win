@@ -1,27 +1,12 @@
-TARGET_64 = calc.exe
-TARGET_32 = calc.exe
+BIN = calc.exe
 
-CC = gcc
+OBJ = main.obj bigint.obj stack.obj bigint_io.obj evaluator.obj 
 
-CFLAGS = -Wall -Wextra -O2
+.c.obj:
+	cl $< /c /W3
 
-SRCS = $(wildcard *.c)
-OBJS = $(SRCS:.c=.o)
-
-all: win64
-
-win64: $(SRCS)
-	@echo "64-bit"
-	$(CC) $(CFLAGS) -m64 $(SRCS) -o $(TARGET_64)
-	@echo "$(TARGET_64)"
-
-win32: $(SRCS)
-	@echo "32-bit"
-	$(CC) $(CFLAGS) -m32 $(SRCS) -o $(TARGET_32)
-	@echo "$(TARGET_32)"
+$(BIN): $(OBJ)
+	cl $(OBJ) /Fe$(BIN)
 
 clean:
-	if exist *.exe del *.exe
-	if exist *.o del *.o
-
-.PHONY: all win64 win32 clean
+	del *.obj *.exe
