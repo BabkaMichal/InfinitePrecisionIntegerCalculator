@@ -16,12 +16,12 @@
 #define EXPRESSION 2048
 
 /* typedef */
-typedef unsigned short limb_t;
-typedef unsigned long calc_t;
+typedef unsigned short limb;
+typedef unsigned long calc;
 
 /* bigint */
 typedef struct {
-    limb_t* limbs;
+    limb* limbs;
     size_t size;
     size_t capacity;
     int sign;
@@ -435,6 +435,14 @@ int op_stack_empty(OpStack* s);
 * @return Result of the calculation from tokens
 */
 BigInt* evaluate_rpn(char** tokens, int count);
+
+/**
+* @brief Checks how many results will be at the end of calculations before calculating
+* @param tokens Pointers to the array of tokens (strings)
+* @param count Number of tokens in the array
+* @return Number of results
+*/
+int check_rpn_syntax(char** tokens, int count);
 
 /**
 * @brief Returns the priority of input operator

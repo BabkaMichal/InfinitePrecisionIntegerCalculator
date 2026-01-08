@@ -2,360 +2,230 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bigInt.h"
+#include "bigint.h"
 
 BigInt* evaluate_rpn(char** tokens, int count) {
 	/* variables */
 	Stack stack;
 	int i;
-	BigInt *a, *b, *res, *num, *final_res;
+	BigInt *a = NULL, *b = NULL, *res = NULL, *num = NULL, *final_res = NULL;
 	char* tok;
+
+	/* safety check */
+	if (!check_rpn_syntax(tokens, count)) {
+		printf("Syntax error!\n");
+		return NULL;
+	}
 
 	/* stack inicialization */
 	bigint_stack_init(&stack);
 
 	/* looping through token array */
 	for (i = 0; i < count; i++) {
+		/* reset variables */
+		a = NULL; b = NULL; res = NULL; num = NULL;
+
 		/* current token */
 		tok = tokens[i];
 
-		/* addition */
-		if (strcmp(tok, "+") == 0) {
-			/* first b then a */
+		/* binary operators */
+		if (strchr("+-*/%^", tok[0]) && tok[1] == '\0') {
+			/* get 2 values */
 			b = bigint_stack_pop(&stack);
 			a = bigint_stack_pop(&stack);
 
-			/* not enought operands on stack */
+			/* sanity check */
 			if (!a || !b) {
-				printf("Error: Missing operands for '+'\n");
-
-				/* cleanup */
-				if (a) bigint_free(a);
-				if (b) bigint_free(b);
-				bigint_stack_clear(&stack);
-				return NULL;
+				printf("Error: Missing operands for '%s'\n", tok);
+				goto error;
 			}
 
-			/* result */
-			res = bigint_add(a, b);
+			/* depends on the token */
+			if (strcmp(tok, "+") == 0) {
+				res = bigint_add(a, b);
+			}
+			else if (strcmp(tok, "-") == 0) {
+				res = bigint_sub(a, b);
+			}
+			else if (strcmp(tok, "*") == 0) {
+				res = bigint_mult(a, b);
+			}
+			else if (strcmp(tok, "/") == 0) {
+				res = bigint_div(a, b);
+			}
+			else if (strcmp(tok, "%") == 0) {
+				res = bigint_mod(a, b);
+			}
+			else if (strcmp(tok, "^") == 0) {
+				res = bigint_pow(a, b);
+			}
 
-			/* cleanup */
-			bigint_free(a); bigint_free(b);
-
-			/* calculation failed */
+			/* error handling */
 			if (!res) {
-				bigint_stack_clear(&stack);
-				return NULL;
+				goto error;
 			}
 
-			/* safety check for push */
+			/* used operands -> we can clear them */
+			bigint_free(a); a = NULL;
+			bigint_free(b); b = NULL;
+
+			/* push onto stack */
 			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
+				goto error;
 			}
+			
+			/* res is on stack -> we can clear */
+			res = NULL;
 		}
 
-		/* substraction */
-		else if (strcmp(tok, "-") == 0) {
-			/* first b then a */
-			b = bigint_stack_pop(&stack);
+		/* unary operators */
+		else if ((strcmp(tok, "!") == 0) || (strcmp(tok, "NEG") == 0)) {
+			/* take one value we need */
 			a = bigint_stack_pop(&stack);
 
-			/* not enought operands on stack */
-			if (!a || !b) {
-				printf("Error: Missing operands for '-'\n");
-
-				/* cleanup */
-				if (a) bigint_free(a);
-				if (b) bigint_free(b);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* result */
-			res = bigint_sub(a, b);
-
-			/* cleanup */
-			bigint_free(a); bigint_free(b);
-
-			/* calculation failed */
-			if (!res) {
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* safety check for push */
-			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-		}
-
-		/* multiplication */
-		else if (strcmp(tok, "*") == 0) {
-			/* first b then a */
-			b = bigint_stack_pop(&stack);
-			a = bigint_stack_pop(&stack);
-
-			/* not enought operands on stack */
-			if (!a || !b) {
-				printf("Error: Missing operands for '*'\n");
-
-				/* cleanup */
-				if (a) bigint_free(a);
-				if (b) bigint_free(b);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* result */
-			res = bigint_mult(a, b);
-
-			/* cleanup */
-			bigint_free(a); bigint_free(b);
-
-			/* calculation failed */
-			if (!res) {
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* safety check for push */
-			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-		}
-
-		/* division */
-		else if (strcmp(tok, "/") == 0) {
-			/* first b then a */
-			b = bigint_stack_pop(&stack);
-			a = bigint_stack_pop(&stack);
-
-			/* not enought operands on stack */
-			if (!a || !b) {
-				printf("Error: Missing operands for '/'\n");
-
-				/* cleanup */
-				if (a) bigint_free(a);
-				if (b) bigint_free(b);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* result */
-			res = bigint_div(a, b);
-
-			/* cleanup */
-			bigint_free(a); bigint_free(b);
-
-			/* calculation failed */
-			if (!res) {
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* safety check for push */
-			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-		}
-
-		/* modulo */
-		else if (strcmp(tok, "%") == 0) {
-			/* first b then a */
-			b = bigint_stack_pop(&stack);
-			a = bigint_stack_pop(&stack);
-
-			/* not enought operands on stack */
-			if (!a || !b) {
-				printf("Error: Missing operands for '%%'\n");
-
-				/* cleanup */
-				if (a) bigint_free(a);
-				if (b) bigint_free(b);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* result */
-			res = bigint_mod(a, b);
-
-			/* cleanup */
-			bigint_free(a); bigint_free(b);
-
-			/* calculation failed */
-			if (!res) {
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* safety check for push */
-			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-		}
-
-		/* power to */
-		else if (strcmp(tok, "^") == 0) {
-			/* first b then a */
-			b = bigint_stack_pop(&stack);
-			a = bigint_stack_pop(&stack);
-
-			/* not enought operands on stack */
-			if (!a || !b) {
-				printf("Error: Missing operands for '^'\n");
-
-				/* cleanup */
-				if (a) bigint_free(a);
-				if (b) bigint_free(b);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* result */
-			res = bigint_pow(a, b);
-
-			/* cleanup */
-			bigint_free(a); bigint_free(b);
-
-			/* calculation failed */
-			if (!res) {
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* safety check for push */
-			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-		}
-
-		/* negate */
-		else if (strcmp(tok, "NEG") == 0) {
-			/* getting the bigint */
-			res = bigint_stack_pop(&stack);
-
-			/* not enought operands on stack */
-			if (!res) {
-				printf("Error: Missing operands for 'NEG'\n");
-
-				/* cleanup */
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-
-			/* result */
-			bigint_negate(res);
-
-			/* safety check for push */
-			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
-			}
-		}
-
-		/* factorial */
-		else if (strcmp(tok, "!") == 0) {
-			/* getting the bigint */
-			a = bigint_stack_pop(&stack);
-
-			/* not enought operands on stack */
+			/* sanity check */
 			if (!a) {
-				/* cleanup */
-				printf("Error: Missing operands for '!'\n");
-				bigint_stack_clear(&stack);
-				return NULL;
+				printf("Error: Missing operands for '%s'\n", tok);
+				goto error;
 			}
 
-			/* result */
-			res = bigint_fact(a);
+			/* depends on the token */
+			if (strcmp(tok, "NEG") == 0) {
+				/* we need to put ownership onto res */
+				bigint_negate(a);
+				res = a;
+				a = NULL;
+			}
+			else {
+				res = bigint_fact(a);
+				bigint_free(a); a = NULL;
+			}
 
-			/* cleanup */
-			bigint_free(a);
-
-			/* calculation failed */
+			/* error handling */
 			if (!res) {
-				bigint_stack_clear(&stack);
-				return NULL;
+				goto error;
 			}
 
-			/* safety check for push */
+			/* push onto stack */
 			if (!bigint_stack_push(&stack, res)) {
-				bigint_free(res);
-				bigint_stack_clear(&stack);
-				return NULL;
+				goto error;
 			}
+
+			/* res is on stack -> we can clear */
+			res = NULL;
 		}
 
 		/* must be a number */
 		else {
+			/* transfer to bigint */
 			num = str_to_bigint(tok);
-			/* bigint allocation failed */
+
+			/* error handling */
 			if (!num) {
 				printf("Error: Unknown token '%s'\n", tok);
-				bigint_stack_clear(&stack);
-				return NULL;
+				goto error;
 			}
 
-			/* stack overflow */
+			/* push onto stack*/
 			if (!bigint_stack_push(&stack, num)) {
 				bigint_free(num);
-				bigint_stack_clear(&stack);
-				return NULL;
+				goto error;
 			}
+		}
+
+		/* get final result */
+		final_res = bigint_stack_pop(&stack);
+
+		/* check for leftovers on stack*/
+		if (!bigint_stack_empty(&stack)) {
+			printf("Syntax error!\n");
+			bigint_free(final_res);
+			final_res = NULL;
+			goto error;
+		}
+
+		/* error handling */
+		if (!final_res) {
+			goto error;
+		}
+
+		/* clean and return */
+		bigint_stack_clear(&stack);
+		return final_res;
+
+		/* centralized cleanup */
+	error:
+		if (a) {
+			bigint_free(a);
+		}
+		if (b) {
+			bigint_free(b);
+		}
+		if (res) {
+			bigint_free(res);
+		}
+		bigint_stack_clear(&stack);
+		return NULL;
+	}
+}
+
+/* checks syntax before calculation to avoid TLE on huge numbers */
+int check_rpn_syntax(char** tokens, int count) {
+	/* variables */
+	int depth = 0;
+	int i;
+	char* tok;
+
+	/* looping through tokens */
+	for (i = 0; i < count; i++) {
+		tok = tokens[i];
+
+		/* binary operators (pop 2, push 1 -> net change -1) */
+		if (strcmp(tok, "+") == 0 || strcmp(tok, "-") == 0 ||
+			strcmp(tok, "*") == 0 || strcmp(tok, "/") == 0 ||
+			strcmp(tok, "%") == 0 || strcmp(tok, "^") == 0) {
+
+			if (depth < 2) return 0; /* Error: missing operands */
+			depth--;
+		}
+
+		/* unary operators (pop 1, push 1 -> net change 0) */
+		else if (strcmp(tok, "!") == 0 || strcmp(tok, "NEG") == 0) {
+			if (depth < 1) return 0; /* Error: missing operand */
+		}
+
+		/* number (push 1 -> net change +1) */
+		else {
+			depth++;
 		}
 	}
 
-	/* there should remain only one number */
-	final_res = bigint_stack_pop(&stack);
-
-	/* if something remain -> error */
-	if (!bigint_stack_empty(&stack)) {
-		printf("Error: Invalid expression (too many operands left)\n");
-
-		/* cleanup */
-		bigint_stack_clear(&stack);
-		bigint_free(final_res);
-		return NULL;
-	}
-
-	/* nothing in final_res */
-	if (!final_res) {
-		printf("Error: Empty expression or stack underflow\n");
-		bigint_stack_clear(&stack);
-		return NULL;
-	}
-
-	/* cleanup */
-	bigint_stack_clear(&stack);
-
-	return final_res;
+	/* at the end, exactly one result must remain */
+	return (depth == 1);
 }
 
 /* returns the priority of operator */
 int get_precedence(char* op) {
-	if (strcmp(op, "!") == 0 || strcmp(op, "^") == 0) return 4;
-	if (strcmp(op, "NEG") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) return 3;
-	if (strcmp(op, "%") == 0) return 2;
-	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0) return 1;
+	if (strcmp(op, "!") == 0 || strcmp(op, "^") == 0) {
+		return 4;
+	}
+	if (strcmp(op, "NEG") == 0 || strcmp(op, "*") == 0 || strcmp(op, "/") == 0) {
+		return 3;
+	}
+	if (strcmp(op, "%") == 0) {
+		return 2;
+	}
+	if (strcmp(op, "+") == 0 || strcmp(op, "-") == 0) {
+		return 1;
+	}
 	return 0;
 }
 
 /* checks what associativity operator has */
 int is_right_associative(char* op) {
-	if (strcmp(op, "^") == 0 || strcmp(op, "NEG") == 0) return 1;
+	if (strcmp(op, "^") == 0 || strcmp(op, "NEG") == 0) {
+		return 1;
+	}
 	return 0;
 }
 
@@ -365,14 +235,18 @@ char* my_strdup(const char* src) {
 	char* dst;
 
 	dst = malloc(strlen(src) + 1);
-	if (dst) strcpy(dst, src);
+	if (dst) {
+		strcpy(dst, src);
+	}
 	return dst;
 }
 
 /* helper function for cleaning queue */
 void queue_clear(char** output_queue, int output_idx) {
 	int i;
-	for (i = 0; i < output_idx; i++) free(output_queue[i]);
+	for (i = 0; i < output_idx; i++) {
+		free(output_queue[i]);
+	}
 	free(output_queue);
 }
 
@@ -435,7 +309,9 @@ char** shunting_yard(char* input, int* out_count) {
 
 			/* finding the end of decimal number */
 			else {
-				while (isdigit(*p)) p++;
+				while (isdigit(*p)) {
+					p++;
+				}
 			}
 			
 			/* make string from number -> find length -> alocate memory -> save number -> add end character */
@@ -469,7 +345,7 @@ char** shunting_yard(char* input, int* out_count) {
 
 			/* two operators in row */
 			else if (expecting_number && strcmp(op, "!") != 0) {
-				printf("Syntax error!");
+				printf("Syntax error!\n");
 
 				/* stack cleanup */
 				op_stack_clear(&op_stack);
@@ -492,7 +368,9 @@ char** shunting_yard(char* input, int* out_count) {
 					top = op_stack_peek(&op_stack);
 
 					/* if start bracket we end */
-					if (strcmp(top, "(") == 0) break;
+					if (strcmp(top, "(") == 0) {
+						break;
+					}
 
 					/* get priority of top and current operator */
 					prec_op = get_precedence(op);
@@ -512,8 +390,12 @@ char** shunting_yard(char* input, int* out_count) {
 			}
 
 			/* we expect number, except factorial */
-			if (strcmp(op, "!") == 0) expecting_number = 0;
-			else expecting_number = 1;
+			if (strcmp(op, "!") == 0) {
+				expecting_number = 0;
+			}
+			else {
+				expecting_number = 1;
+			}
 		}
 
 		/* starting bracket */
@@ -559,7 +441,7 @@ char** shunting_yard(char* input, int* out_count) {
 
 		/* unknown character */
 		else {
-			printf("Error: Unknown character '%c'\n", *p);
+			printf("Syntax error!\n");
 
 			/* stack cleanup */
 			op_stack_clear(&op_stack);
@@ -574,7 +456,7 @@ char** shunting_yard(char* input, int* out_count) {
 	/* if we expect number at end -> syntax error */
 	if (expecting_number)
 	{
-		printf("Syntax error!");
+		printf("Syntax error!\n");
 
 		/* stack cleanup */
 		op_stack_clear(&op_stack);

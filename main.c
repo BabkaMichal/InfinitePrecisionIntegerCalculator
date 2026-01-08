@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bigInt.h"
+#include "bigint.h"
+
+/* Upgrades: Make single responsibility principle in each class -> would take a lot of time */
 
 int main(int argc, char* argv[]) {
     /* variables */
@@ -20,7 +22,9 @@ int main(int argc, char* argv[]) {
     expression = (char*)malloc(EXPRESSION * sizeof(char));
 
     /* safety */
-    if (!expression) return EXIT_FAILURE;
+    if (!expression) {
+        return EXIT_FAILURE;
+    }
 
     /* setting up empty string */
     expression[0] = '\0';
@@ -45,9 +49,14 @@ int main(int argc, char* argv[]) {
     
     /* main loop */
     while (1) {
-        
+       
         /* end of file or error */
-        if (!fgets(buffer, sizeof(buffer), input_stream)) break;
+        if (!fgets(buffer, sizeof(buffer), input_stream)) {
+            break;
+        }
+
+        printf("> ");
+        fflush(stdout);
 
         /* remove whitespaces from end */
         len = strlen(buffer);
@@ -57,7 +66,9 @@ int main(int argc, char* argv[]) {
         }
 
         /* empty line */
-        if (strlen(buffer) == 0) continue;
+        if (strlen(buffer) == 0) {
+            continue;
+        }
 
         /* concating lines if multiple */
         expr_len = strlen(expression);
@@ -68,10 +79,14 @@ int main(int argc, char* argv[]) {
                 if (!safe_strcat(&expression, &expr_capacity, " ")) break;
             }
         }
-        if (!safe_strcat(&expression, &expr_capacity, buffer)) break;
+        if (!safe_strcat(&expression, &expr_capacity, buffer)) {
+            break;
+        }
 
         /* if not end of a expression -> another loop */
-        if (is_incomplete(expression)) continue;
+        if (is_incomplete(expression)) {
+            continue;
+        }
 
         /* if from file -> print expression */
         if (!user) {

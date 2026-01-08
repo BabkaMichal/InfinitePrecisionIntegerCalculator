@@ -7,18 +7,22 @@
 /* router */
 BigInt* str_to_bigint(const char* str) {
     /* sanity check */
-    if (!str || str[0] == '\0') return NULL;
+    if (!str || str[0] == '\0') {
+        return NULL;
+    }
 
     /* if first char is zero and second is not end of string we think it is bin/hex */
     if (str[0] == '0' && str[1] != '\0')
     {
         /* bin */
-        if (str[1] == 'B' || str[1] == 'b')
+        if (str[1] == 'B' || str[1] == 'b') {
             return bin_to_bigint(str + 2);
+        }
 
         /* hex */
-        if (str[1] == 'X' || str[1] == 'x')
+        if (str[1] == 'X' || str[1] == 'x') {
             return hex_to_bigint(str + 2);
+        }
     }
     /* everything other is dec */
     return dec_to_bigint(str);
@@ -31,14 +35,17 @@ BigInt* dec_to_bigint(const char* str) {
     int i;
 
     /* sanity check */
-    if (!str) return NULL;
+    if (!str) {
+        return NULL;
+    }
 
     /* initializing bigInt */
     n = bigint_init(INITIALCAP_BI);
 
     /* if minus before number we take it as negative */
-    if (str[0] == '-')
+    if (str[0] == '-') {
         n->sign = SIGN_NEG;
+    }
 
     /* looping through every digit and saving them to bigInt struct */
     for (i = 0; str[i] != '\0'; i++) {
@@ -57,7 +64,9 @@ BigInt* bin_to_bigint(const char* str) {
     int i;
 
     /* sanity check */
-    if (!str || str[0] == '\0') return NULL;
+    if (!str || str[0] == '\0') {
+        return NULL;
+    }
 
     /* loading raw value */
     raw = bigint_init(INITIALCAP_BI);
@@ -101,7 +110,9 @@ BigInt* hex_to_bigint(const char* str) {
     int first_digit_val, i;
 
     /* sanity check */
-    if (!str || str[0] == '\0') return NULL;
+    if (!str || str[0] == '\0') {
+        return NULL;
+    }
 
     /* loading raw value */
     raw = bigint_init(INITIALCAP_BI);
@@ -147,9 +158,15 @@ BigInt* hex_to_bigint(const char* str) {
 
 /* helper class to convert hex char to numeric value */
 int hex_char_to_int(char c) {
-    if (isdigit(c)) return c - '0';
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (isdigit(c)) {
+        return c - '0';
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
     return -1; 
 }
 
@@ -173,7 +190,9 @@ void process_input(char* input_line, OutputMode mode) {
     rpn_tokens = shunting_yard(input_line, &count);
 
     /* safety */
-    if (!rpn_tokens) return;
+    if (!rpn_tokens) {
+        return;
+    }
 
     /* evaluate tokens */
     result = evaluate_rpn(rpn_tokens, count);
@@ -200,10 +219,15 @@ void process_input(char* input_line, OutputMode mode) {
 /* checks if command or calculation */
 int handle_line(char* buffer, OutputMode* current_mode) {
     /* ignore empty line */
-    if (strlen(buffer) == 0) return 1;
+    if (strlen(buffer) == 0) {
+        return 1;
+    }
 
     /* handles quit */
-    if (strcmp(buffer, "quit") == 0) return 0;
+    if (strcmp(buffer, "quit") == 0) {
+        printf("quit\n");
+        return 0;
+    }
 
     /* change of output mode */
     if (strcmp(buffer, "bin") == 0) {
@@ -258,16 +282,22 @@ int is_incomplete(char* buffer) {
     len = strlen(buffer);
 
     /* ignoring spaces at end */
-    while (len > 0 && isspace(buffer[len - 1])) len--;
+    while (len > 0 && isspace(buffer[len - 1])) {
+        len--;
+    }
 
     /* empty line */
-    if (len == 0) return 0;
+    if (len == 0) {
+        return 0;
+    }
 
     /* last character */
     last = buffer[len - 1];
 
     /* ends with operator? */
-    if (strchr("+-*/%^", last) || last == '(') return 1;
+    if (strchr("+-*/%^", last) || last == '(') {
+        return 1;
+    }
 
     /* ends with prefix? */
     if (len >= 2 && buffer[len - 2] == '0' && (last == 'x' || last == 'b')) {
@@ -281,11 +311,13 @@ int is_incomplete(char* buffer) {
 /* print bigint in hexadecimal */
 void print_hex(BigInt* n) {
     /* variables */
-    int i, lnz, k, skipping, shift, nibble, next_val;
-    limb_t next_raw, next_trans, val;
+    int i, lnz, k, skipping, shift, nibble, next_val, first_digit;
+    limb next_raw, next_trans, val, top;
 
     /* sanity checks */
-    if (!n) return;
+    if (!n) {
+        return;
+    }
     if (n->size == 0 || bigint_zero(n)) {
         printf("0x0\n");
         return;
@@ -293,8 +325,22 @@ void print_hex(BigInt* n) {
     printf("0x");
     /* positive numbers */
     if (n->sign != SIGN_NEG) {
-        /* if the most significant digit is 8-F we need to add 0 to start to mark it as positive  */
-        if (n->limbs[n->size - 1] & 0x8000) {
+        /* find top */
+        top = n->limbs[n->size - 1];
+
+
+        /* we need to find the first digit to write */
+        if (top >= 0x1000)
+            first_digit = (top >> 12) & 0xF;
+        else if (top >= 0x100)
+            first_digit = (top >> 8) & 0xF;
+        else if (top >= 0x10)
+            first_digit = (top >> 4) & 0xF;
+        else
+            first_digit = top & 0xF;
+
+        /* if the digit is bigger than 8 -> we write 0 */
+        if (first_digit >= 8) {
             printf("0");
         }
 
@@ -332,7 +378,7 @@ void print_hex(BigInt* n) {
             /* limb is lowest non zero limb -> we add the carry from calculations before */
             else if (i == lnz) {
                 /* we negate and add 1 */
-                val = (limb_t)(-n->limbs[i]);
+                val = (limb)(-n->limbs[i]);
             }
 
             /* limb below LNZ -> when we negate it overflows and puts carry into another limb */
@@ -362,7 +408,7 @@ void print_hex(BigInt* n) {
                             /* next limb -> need to calculate value*/
                             next_raw = n->limbs[i - 1];
                             if ((i - 1) > lnz) next_trans = ~next_raw;
-                            else if ((i - 1) == lnz) next_trans = (limb_t)(-next_raw);
+                            else if ((i - 1) == lnz) next_trans = (limb)(-next_raw);
                             else next_trans = 0;
 
                             next_val = (next_trans >> 12) & 0xF;
@@ -404,17 +450,21 @@ void print_dec(BigInt* n) {
     /* variables */
     BigInt *billion, *temp, * quotient, *remainder;
     int count, capacity, i;
-    calc_t* chunks, rem_val;
+    calc* chunks, rem_val;
 
     /* sanity checks */
-    if (!n) return;
+    if (!n) {
+        return;
+    }
     if (n->size == 0 || bigint_zero(n)) {
         printf("0\n");
         return;
     }
 
     /* sign */
-    if (n->sign == SIGN_NEG) printf("-");
+    if (n->sign == SIGN_NEG) {
+        printf("-");
+    }
 
     /* variables */
     /* base 10^9 -> 9 digits */
@@ -427,7 +477,7 @@ void print_dec(BigInt* n) {
     /9 -> transfering into chunks -> one chunk = 9 digits
     +10 -> safety */
     capacity = (n->size * 5) / 9 + 10;
-    chunks = (calc_t*)malloc(capacity * sizeof(calc_t));
+    chunks = (calc*)malloc(capacity * sizeof(calc));
 
     /* safety */
     if (!chunks) {
@@ -450,8 +500,12 @@ void print_dec(BigInt* n) {
 
         /* put the result into calc_t(ulong) */
         rem_val = 0;
-        if (remainder->size > 0) rem_val |= remainder->limbs[0];
-        if (remainder->size > 1) rem_val |= ((calc_t)remainder->limbs[1] << 16);
+        if (remainder->size > 0) {
+            rem_val |= remainder->limbs[0];
+        }
+        if (remainder->size > 1) {
+            rem_val |= ((calc)remainder->limbs[1] << 16);
+        }
 
         chunks[count++] = rem_val;
 
@@ -487,7 +541,9 @@ void print_bin(BigInt* n) {
     long msb_index, lsb_index, i;
 
     /* sanity checks */
-    if (!n) return;
+    if (!n) {
+        return;
+    }
     if (n->size == 0 || bigint_zero(n)) {
         printf("0b0\n");
         return;
@@ -503,12 +559,12 @@ void print_bin(BigInt* n) {
 
         /* skipping leading 0 */
         skipping = 1;
-        bits_per_limb = sizeof(limb_t) * 8;
+        bits_per_limb = sizeof(limb) * 8;
 
         /* looping through every limb */
         for (i = (int)n->size - 1; i >= 0; i--) {
             /* value of current limb */
-            limb_t val = n->limbs[i];
+            limb val = n->limbs[i];
 
             /* looping through every bit in limb */
             for (j = bits_per_limb - 1; j >= 0; j--) {
@@ -517,7 +573,9 @@ void print_bin(BigInt* n) {
 
                 /* skipping leading zeros */
                 if (skipping) {
-                    if (bit == 0) continue;
+                    if (bit == 0) {
+                        continue;
+                    }
                     skipping = 0;
                 }
 
@@ -578,7 +636,9 @@ int safe_strcat(char** expr_ptr, int* capacity, const char* to_add) {
     if (needed > *capacity) {
         /* current + EXPRESSION(1024) + safety(128) */
         new_cap = *capacity + EXPRESSION;
-        if (new_cap < needed) new_cap = needed + 128;
+        if (new_cap < needed) {
+            new_cap = needed + 128;
+        }
 
         /* reallocation */
         new_expr = (char*)realloc(*expr_ptr, new_cap * sizeof(char));

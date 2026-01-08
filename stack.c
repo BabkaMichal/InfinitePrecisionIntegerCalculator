@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "bigint.h"
 
@@ -22,7 +23,9 @@ int bigint_stack_push(Stack* s, BigInt* val) {
         new_items = realloc(s->items, new_cap * sizeof(BigInt*));
 
         /* safety */
-        if (!new_items) return 0;
+        if (!new_items) {
+            return 0;
+        }
 
         /* copying items */
         s->items = new_items;
@@ -68,7 +71,9 @@ void bigint_stack_clear(Stack* s) {
     }
 
     /* clean pointers */
-    if (s->items) free(s->items);
+    if (s->items) {
+        free(s->items);
+    }
 
     /* reset variables */
     s->top = -1;
@@ -95,7 +100,9 @@ int op_stack_push(OpStack* s, char* op) {
         new_items = realloc(s->items, new_cap * sizeof(char*));
 
         /* safety */
-        if (!new_items) return 0;
+        if (!new_items) {
+            return 0;
+        }
 
         /* copying items */
         s->items = new_items;
@@ -139,7 +146,9 @@ void op_stack_clear(OpStack* s) {
     }
 
     /* clean pointers */
-    if (s->items) free(s->items);
+    if (s->items) {
+        free(s->items);
+    }
 
     /* reset variables */
     s->top = -1;

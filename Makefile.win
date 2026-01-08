@@ -1,5 +1,7 @@
 BIN = calc.exe
 
+CFLAGS = /nologo /W3 /O2 /D_CRT_SECURE_NO_WARNINGS
+
 OBJ = main.obj bigint.obj stack.obj bigint_io.obj evaluator.obj 
 
 .c.obj:
