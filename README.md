@@ -1,2 +1,2 @@
-Celočíselná kalkulačka s neomezenou velikostí.
-Psané v ansi C.
+Arbitrary-precision integer calculator.
+Written in ANSI C.
